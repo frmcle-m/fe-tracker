@@ -19,6 +19,8 @@
     --free:#8FB9A8;
     --free-bg:#E4EEE9;
     --busy:#D8A48F;
+    --commute:#C9A66B;
+    --other:#9C89B8;
     --line:#D6DFE5;
     --radius:14px;
   }
@@ -178,6 +180,8 @@
     background:var(--busy);
     border-radius:3px;
   }
+  .seg.commute{background:var(--commute);}
+  .seg.other{background:var(--other);}
   .track-ruler{display:flex;justify-content:space-between;font-size:9.5px;color:var(--ink-soft);opacity:0.6;margin-top:2px;}
   .free-hours{font-size:12px;color:var(--ink-soft);text-align:right;}
   .free-hours b{color:var(--primary-deep);font-size:14px;}
@@ -185,12 +189,65 @@
   .plan-cell label{display:block;margin-bottom:3px;}
   .plan-input-row{display:flex;align-items:center;gap:4px;justify-content:flex-end;}
   .plan-time-input{width:48px;border:1px solid var(--line);border-radius:6px;padding:4px 6px;font-family:inherit;font-size:12px;background:var(--bg);color:var(--ink);text-align:right;}
-  .legend{display:flex;gap:16px;font-size:11.5px;color:var(--ink-soft);margin-bottom:12px;}
+  .legend{display:flex;gap:16px;font-size:11.5px;color:var(--ink-soft);margin-bottom:12px;flex-wrap:wrap;}
   .legend span{display:inline-flex;align-items:center;gap:6px;}
   .dot{width:10px;height:10px;border-radius:3px;display:inline-block;}
   .empty-note{font-size:13px;color:var(--ink-soft);padding:14px 0;}
   .sleep-row{display:flex;align-items:center;gap:8px;margin-bottom:14px;font-size:13px;color:var(--ink-soft);}
   .sleep-row input[type=number]{width:70px;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-family:inherit;font-size:13px;background:var(--bg);color:var(--ink);}
+
+  /* 可処分時間の設定 */
+  .setting-block{margin-bottom:24px;padding-bottom:22px;border-bottom:1px solid var(--surface-alt);}
+  .setting-block:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none;}
+  .setting-title{font-size:14px;font-weight:700;color:var(--primary-deep);margin:0 0 8px;}
+  .setting-note{font-size:12px;color:var(--ink-soft);margin:0 0 10px;}
+  .commute-list{display:flex;flex-direction:column;gap:8px;}
+  .commute-row{display:flex;align-items:center;gap:10px;font-size:13px;}
+  .commute-row .place-name{flex:1;color:var(--ink);}
+  .commute-row input[type=number]{width:70px;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-family:inherit;font-size:13px;background:var(--bg);color:var(--ink);}
+  .cal-toolbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;}
+  .cal-nav{display:flex;align-items:center;gap:8px;}
+  .cal-nav .btn.secondary{padding:6px 12px;font-size:12px;}
+  .cal-range-label{font-size:13.5px;font-weight:700;color:var(--primary-deep);min-width:110px;text-align:center;}
+  .cal-month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+  .cal-wd{font-size:11px;color:var(--ink-soft);text-align:center;padding:4px 0;font-weight:600;}
+  .cal-day-cell{
+    background:var(--bg);border-radius:8px;padding:6px;min-height:64px;cursor:pointer;
+    border:1px solid transparent;font-size:11px;
+  }
+  .cal-day-cell:hover{border-color:var(--primary);}
+  .cal-day-cell.other-month{opacity:0.4;}
+  .cal-day-cell.today{border-color:var(--primary);}
+  .cal-day-cell.selected{background:var(--surface-alt);border-color:var(--primary-deep);}
+  .cal-day-num{font-weight:700;color:var(--ink);margin-bottom:3px;}
+  .cal-day-events{display:flex;flex-direction:column;gap:2px;}
+  .cal-chip{border-radius:4px;padding:1px 4px;font-size:9.5px;color:#fff;background:var(--busy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .cal-chip.other{background:var(--other);}
+  .cal-week-grid{display:flex;flex-direction:column;gap:6px;}
+  .cal-week-row{
+    display:grid;grid-template-columns:80px 1fr;align-items:center;gap:10px;
+    padding:8px;border-radius:8px;cursor:pointer;border:1px solid transparent;
+  }
+  .cal-week-row:hover{border-color:var(--primary);}
+  .cal-week-row.selected{background:var(--bg);border-color:var(--primary-deep);}
+  .cal-week-label{font-size:12px;color:var(--ink-soft);font-weight:600;}
+  .day-editor{background:var(--bg);border-radius:12px;padding:16px 18px;margin-top:14px;}
+  .day-editor-title{font-size:13.5px;font-weight:700;color:var(--primary-deep);margin:0 0 10px;}
+  .day-editor-list{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
+  .day-editor-item{
+    display:flex;justify-content:space-between;align-items:center;background:var(--surface);
+    border-radius:8px;padding:8px 12px;font-size:12.5px;
+  }
+  .day-editor-item .tag-dot{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:8px;background:var(--busy);}
+  .day-editor-item .tag-dot.other{background:var(--other);}
+  .day-editor-item button{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:15px;line-height:1;}
+  .day-editor-item button:hover{color:#c0574a;}
+  .day-editor-form{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .day-editor-form select, .day-editor-form input{
+    border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-family:inherit;font-size:12.5px;background:var(--surface);color:var(--ink);
+  }
+  .day-editor-form input[type=time]{width:110px;}
+  .day-editor-form input[type=text]{flex:1;min-width:140px;}
 
   /* log */
   .log-form{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;}
@@ -303,25 +360,59 @@
   </header>
 
   <section>
-    <h2>シフト取込み <span class="num">01</span></h2>
-    <p class="section-desc">シフトボードの通知テキストをそのまま貼り付けてください。バイトの予定を勉強可能時間の計算に反映します。</p>
-    <textarea id="shiftInput" placeholder="07/02（木）08:00 - 10:00&#10;- リピラティス池袋店&#10;..."></textarea>
-    <div class="import-row">
-      <select id="yearSelect"></select>
-      <button class="btn" id="parseBtn">予定を取り込む</button>
-      <button class="btn secondary" id="clearShiftsBtn">取込み済みを全て削除</button>
-      <span class="import-msg" id="importMsg"></span>
+    <h2>可処分時間の設定 <span class="num">01</span></h2>
+    <p class="section-desc">アルバイト・その他の予定・移動時間・睡眠時間を設定します。ここでの設定が「週間可処分時間」に反映されます。</p>
+
+    <div class="setting-block">
+      <h3 class="setting-title">睡眠時間</h3>
+      <div class="sleep-row">
+        <label for="sleepHoursInput">睡眠時間(1日あたり)</label>
+        <input type="number" id="sleepHoursInput" min="0" max="12" step="0.5" value="7">
+        <span>時間</span>
+      </div>
+    </div>
+
+    <div class="setting-block">
+      <h3 class="setting-title">移動時間(勤務先ごと)</h3>
+      <p class="setting-note">アルバイトの勤務先ごとに、片道の移動時間を設定できます。出勤前・退勤後にそれぞれ加算されます。</p>
+      <div class="commute-list" id="commuteList"></div>
+    </div>
+
+    <div class="setting-block">
+      <h3 class="setting-title">シフトボードから一括取込み</h3>
+      <p class="setting-note">シフトボードの通知テキストをそのまま貼り付けてください。</p>
+      <textarea id="shiftInput" placeholder="07/02（木）08:00 - 10:00&#10;- リピラティス池袋店&#10;..."></textarea>
+      <div class="import-row">
+        <select id="yearSelect"></select>
+        <button class="btn" id="parseBtn">予定を取り込む</button>
+        <button class="btn secondary" id="clearShiftsBtn">取込み済みシフトを全て削除</button>
+        <span class="import-msg" id="importMsg"></span>
+      </div>
+    </div>
+
+    <div class="setting-block">
+      <h3 class="setting-title">カレンダーで確認・編集</h3>
+      <p class="setting-note">日付をクリックすると、その日のシフト・その他の予定を追加・編集・削除できます。</p>
+      <div class="cal-toolbar">
+        <div class="seg-toggle">
+          <button class="seg-btn" data-cal="month">月表示</button>
+          <button class="seg-btn" data-cal="week">週表示</button>
+        </div>
+        <div class="cal-nav">
+          <button class="btn secondary" id="calPrevBtn">‹ 前</button>
+          <span class="cal-range-label" id="calRangeLabel"></span>
+          <button class="btn secondary" id="calNextBtn">次 ›</button>
+          <button class="btn secondary" id="calTodayBtn">今日</button>
+        </div>
+      </div>
+      <div id="calendarWrap"></div>
+      <div id="dayEditorWrap"></div>
     </div>
   </section>
 
   <section>
     <h2>週間可処分時間 <span class="num">02</span></h2>
-    <p class="section-desc">1日のうち6:00〜24:00の範囲で、バイトの予定(オレンジ)と睡眠時間を除いた時間が勉強に使える時間です。</p>
-    <div class="sleep-row">
-      <label for="sleepHoursInput">睡眠時間(1日あたり)</label>
-      <input type="number" id="sleepHoursInput" min="0" max="12" step="0.5" value="7">
-      <span>時間</span>
-    </div>
+    <p class="section-desc">1日のうち6:00〜24:00の範囲で、アルバイト・移動時間・その他の予定・睡眠時間を除いた時間が勉強に使える時間です。設定は「可処分時間の設定」で行います。</p>
     <div class="period-row">
       <label class="period-check"><input type="checkbox" id="timelinePeriodAllChk" checked>全期間</label>
       <div class="period-inputs" id="timelinePeriodInputs" style="display:none;">
@@ -331,7 +422,9 @@
       </div>
     </div>
     <div class="legend">
-      <span><span class="dot" style="background:var(--busy)"></span>予定あり</span>
+      <span><span class="dot" style="background:var(--busy)"></span>アルバイト</span>
+      <span><span class="dot" style="background:var(--commute)"></span>移動時間</span>
+      <span><span class="dot" style="background:var(--other)"></span>その他予定</span>
       <span><span class="dot" style="background:var(--free-bg);border:1px solid var(--line)"></span>勉強可能</span>
     </div>
     <div id="timelineWrap"></div>
@@ -414,14 +507,21 @@
   let state = {
     examDate: '',
     shifts: [],       // {date:'YYYY-MM-DD', start:'HH:MM', end:'HH:MM', place:''}
+    otherEvents: [],  // {id, date:'YYYY-MM-DD', start:'HH:MM', end:'HH:MM', label:''} アルバイト以外の予定
+    commuteMinutesByPlace: {}, // { 勤務先名: 片道の移動時間(分) } 出勤前・退勤後にそれぞれ加算
     sleepHours: 7,     // 1日あたりの睡眠時間(h)。週間可処分時間の計算から差し引く
     logs: [],         // {id, date, hours, topic}
     kakomonRecords: [], // {url,date,field,major,minor,correct,label} from 過去問道場CSV
     trendGranularity: 'field', // 'field' (分野名) or 'major' (大分類)
     analysisPeriod: { all: true, start: '', end: '' }, // 過去問道場CSV分析の対象期間
     timelinePeriod: { all: true, start: '', end: '' }, // 週間可処分時間の表示期間
-    dailyStudyPlan: {} // {date: 分} 各日の学習計画時間。未入力の日は30分として扱う
+    dailyStudyPlan: {}, // {date: 分} 各日の学習計画時間。未入力の日は30分として扱う
+    calendarView: 'month' // 可処分時間の設定カレンダーの表示形式: 'month' | 'week'
   };
+
+  // カレンダーの表示中の基準日・選択中の日付(保存はしない。開くたびに今日を基準にする)
+  let calendarAnchor = new Date(); calendarAnchor.setHours(0,0,0,0);
+  let selectedEditorDate = fmtDate(calendarAnchor);
 
   async function loadState(){
     try{
@@ -513,6 +613,9 @@
     document.getElementById('shiftInput').value = '';
     saveState();
     renderTimeline();
+    renderCommuteList();
+    renderCalendar();
+    renderDayEditor();
   });
 
   document.getElementById('clearShiftsBtn').addEventListener('click', () => {
@@ -520,6 +623,9 @@
     state.shifts = [];
     saveState();
     renderTimeline();
+    renderCommuteList();
+    renderCalendar();
+    renderDayEditor();
     document.getElementById('importMsg').textContent = '削除しました。';
   });
 
@@ -553,14 +659,62 @@
     renderTimeline();
   });
 
-  function filteredShifts(){
-    const p = state.timelinePeriod || { all: true, start: '', end: '' };
-    if(p.all || (!p.start && !p.end)) return state.shifts;
-    return state.shifts.filter(s => {
-      if(p.start && s.date < p.start) return false;
-      if(p.end && s.date > p.end) return false;
-      return true;
+  // ---------- 移動時間(勤務先ごと) ----------
+  function renderCommuteList(){
+    const wrap = document.getElementById('commuteList');
+    const places = [...new Set(state.shifts.map(s => s.place).filter(Boolean))];
+    Object.keys(state.commuteMinutesByPlace || {}).forEach(p => { if(!places.includes(p)) places.push(p); });
+    places.sort();
+    if(places.length === 0){
+      wrap.innerHTML = '<p class="empty-note">シフトを登録すると、勤務先ごとに移動時間を設定できるようになります。</p>';
+      return;
+    }
+    wrap.innerHTML = places.map(place => {
+      const v = (state.commuteMinutesByPlace && state.commuteMinutesByPlace[place] != null) ? state.commuteMinutesByPlace[place] : '';
+      return `
+        <div class="commute-row">
+          <span class="place-name">${escapeHtml(place)}</span>
+          <input type="number" class="commute-input" data-place="${escapeHtml(place)}" min="0" step="5" placeholder="0" value="${v}">
+          <span>分(片道)</span>
+        </div>
+      `;
+    }).join('');
+    wrap.querySelectorAll('.commute-input').forEach(input => {
+      input.addEventListener('change', (e) => {
+        const place = e.target.dataset.place;
+        let v = parseFloat(e.target.value);
+        if(isNaN(v) || v < 0) v = 0;
+        if(!state.commuteMinutesByPlace) state.commuteMinutesByPlace = {};
+        state.commuteMinutesByPlace[place] = v;
+        saveState();
+        renderTimeline();
+      });
     });
+  }
+
+  // ---------- その他予定・シフトの手動編集 ----------
+  function addOtherEvent(date, start, end, label){
+    if(!state.otherEvents) state.otherEvents = [];
+    state.otherEvents.push({ id: Date.now().toString(), date, start, end, label });
+    state.otherEvents.sort((a,b) => (a.date+a.start).localeCompare(b.date+b.start));
+    saveState();
+  }
+
+  function deleteOtherEvent(id){
+    state.otherEvents = (state.otherEvents || []).filter(e => e.id !== id);
+    saveState();
+  }
+
+  function addShiftManual(date, start, end, place){
+    state.shifts.push({ date, start, end, place });
+    state.shifts.sort((a,b) => (a.date+a.start).localeCompare(b.date+b.start));
+    saveState();
+  }
+
+  function deleteShiftAt(date, start, end, place){
+    const idx = state.shifts.findIndex(s => s.date===date && s.start===start && s.end===end && s.place===place);
+    if(idx >= 0) state.shifts.splice(idx, 1);
+    saveState();
   }
 
   // ---------- Timeline ----------
@@ -581,47 +735,118 @@
     document.getElementById('timelinePeriodEnd').value = p.end || '';
   }
 
+  // 表示対象の日付範囲を決定する。期間が指定されていればそれに従い、「全期間」の場合は
+  // 登録済みのシフト・その他予定の日付範囲(今日を含む、最低でも今日から2週間先まで)を表示する。
+  function dateRangeForTimeline(){
+    const p = state.timelinePeriod || { all: true, start: '', end: '' };
+    const today = fmtDate(new Date());
+    const fallbackEnd = (() => { const d = new Date(); d.setDate(d.getDate() + 13); return fmtDate(d); })();
+    if(!p.all && p.start && p.end){
+      return { start: p.start, end: p.end };
+    }
+    if(!p.all && p.start){
+      const d = new Date(p.start + 'T00:00:00'); d.setDate(d.getDate() + 13);
+      return { start: p.start, end: fmtDate(d) };
+    }
+    if(!p.all && p.end){
+      const d = new Date(p.end + 'T00:00:00'); d.setDate(d.getDate() - 13);
+      return { start: fmtDate(d), end: p.end };
+    }
+    const allDates = [...state.shifts.map(s => s.date), ...(state.otherEvents || []).map(e => e.date)];
+    let start = today, end = fallbackEnd;
+    if(allDates.length){
+      const minD = allDates.reduce((a,b) => a < b ? a : b);
+      const maxD = allDates.reduce((a,b) => a > b ? a : b);
+      start = minD < today ? minD : today;
+      end = maxD > fallbackEnd ? maxD : fallbackEnd;
+    }
+    return { start, end };
+  }
+
+  function eachDate(start, end){
+    const dates = [];
+    const d = new Date(start + 'T00:00:00');
+    const endD = new Date(end + 'T00:00:00');
+    while(d <= endD){
+      dates.push(fmtDate(d));
+      d.setDate(d.getDate() + 1);
+    }
+    return dates;
+  }
+
+  // 重なりのある時間帯([開始分,終了分]の配列)をマージし、実際に埋まっている合計分数を返す
+  function mergeIntervals(intervals){
+    const sorted = intervals.filter(iv => iv[1] > iv[0]).sort((a,b) => a[0] - b[0]);
+    let total = 0, curStart = null, curEnd = null;
+    sorted.forEach(([s,e]) => {
+      if(curStart === null){ curStart = s; curEnd = e; return; }
+      if(s <= curEnd){ curEnd = Math.max(curEnd, e); }
+      else { total += curEnd - curStart; curStart = s; curEnd = e; }
+    });
+    if(curStart !== null) total += curEnd - curStart;
+    return total;
+  }
+
   function renderTimeline(){
     syncTimelinePeriodControls();
     const sleepInput = document.getElementById('sleepHoursInput');
     sleepInput.value = (typeof state.sleepHours === 'number' ? state.sleepHours : 7);
     const wrap = document.getElementById('timelineWrap');
     wrap.innerHTML = '';
-    if(state.shifts.length === 0){
-      wrap.innerHTML = '<p class="empty-note">まだ予定が取り込まれていません。上のフォームからシフトボードのテキストを貼り付けてください。</p>';
+
+    const { start, end } = dateRangeForTimeline();
+    const dates = eachDate(start, end);
+    if(dates.length === 0){
+      wrap.innerHTML = '<p class="empty-note">表示する期間がありません。</p>';
       return;
     }
-    const periodShifts = filteredShifts();
-    if(periodShifts.length === 0){
-      wrap.innerHTML = '<p class="empty-note">選択した期間内の予定がありません。</p>';
-      return;
-    }
-    const byDate = {};
-    periodShifts.forEach(s => {
-      if(!byDate[s.date]) byDate[s.date] = [];
-      byDate[s.date].push(s);
-    });
-    const dates = Object.keys(byDate).sort();
+
+    const shiftsByDate = {};
+    state.shifts.forEach(s => { (shiftsByDate[s.date] = shiftsByDate[s.date] || []).push(s); });
+    const eventsByDate = {};
+    (state.otherEvents || []).forEach(e => { (eventsByDate[e.date] = eventsByDate[e.date] || []).push(e); });
+    const commuteMap = state.commuteMinutesByPlace || {};
+    const sleepHours = typeof state.sleepHours === 'number' ? state.sleepHours : 7;
+
     dates.forEach(date => {
-      const dayShifts = byDate[date];
+      const dayShifts = shiftsByDate[date] || [];
+      const dayEvents = eventsByDate[date] || [];
       const d = new Date(date + 'T00:00:00');
       const wd = WEEKDAYS[d.getDay()];
       const [y,mo,da] = date.split('-');
 
-      let busyMin = 0;
-      const segsHtml = dayShifts.map(s => {
-        let start = Math.max(toMin(s.start), WINDOW_START);
-        let end = Math.min(toMin(s.end), WINDOW_END);
-        if(end <= start) return '';
-        busyMin += (end - start);
-        const leftPct = ((start - WINDOW_START) / WINDOW_LEN) * 100;
-        const widthPct = ((end - start) / WINDOW_LEN) * 100;
-        return `<div class="seg" style="left:${leftPct}%;width:${widthPct}%;" title="${s.place} ${s.start}-${s.end}"></div>`;
-      }).join('');
+      const clip = (s,e) => [Math.max(s, WINDOW_START), Math.min(e, WINDOW_END)];
+      const shiftSegs = [], commuteSegs = [], otherSegs = [];
 
-      const sleepHours = typeof state.sleepHours === 'number' ? state.sleepHours : 7;
+      dayShifts.forEach(s => {
+        const [ss, se] = clip(toMin(s.start), toMin(s.end));
+        if(se > ss) shiftSegs.push({ start: ss, end: se, title: `${s.place} ${s.start}-${s.end}` });
+        const commute = commuteMap[s.place] || 0;
+        if(commute > 0){
+          const [cs1, ce1] = clip(toMin(s.start) - commute, toMin(s.start));
+          if(ce1 > cs1) commuteSegs.push({ start: cs1, end: ce1, title: `${s.place} 移動(往路) ${commute}分` });
+          const [cs2, ce2] = clip(toMin(s.end), toMin(s.end) + commute);
+          if(ce2 > cs2) commuteSegs.push({ start: cs2, end: ce2, title: `${s.place} 移動(復路) ${commute}分` });
+        }
+      });
+      dayEvents.forEach(ev => {
+        const [es, ee] = clip(toMin(ev.start), toMin(ev.end));
+        if(ee > es) otherSegs.push({ start: es, end: ee, title: `${ev.label || 'その他予定'} ${ev.start}-${ev.end}` });
+      });
+
+      const allIntervals = [...shiftSegs, ...commuteSegs, ...otherSegs].map(s => [s.start, s.end]);
+      const busyMin = mergeIntervals(allIntervals);
       const freeHours = Math.max(0, (WINDOW_LEN - busyMin) / 60 - sleepHours).toFixed(1);
       const planVal = (state.dailyStudyPlan && state.dailyStudyPlan[date] != null) ? state.dailyStudyPlan[date] : '';
+
+      const segToHtml = (s, cls) => {
+        const leftPct = ((s.start - WINDOW_START) / WINDOW_LEN) * 100;
+        const widthPct = ((s.end - s.start) / WINDOW_LEN) * 100;
+        return `<div class="seg ${cls}" style="left:${leftPct}%;width:${widthPct}%;" title="${escapeHtml(s.title)}"></div>`;
+      };
+      const segsHtml = shiftSegs.map(s => segToHtml(s, '')).join('')
+        + commuteSegs.map(s => segToHtml(s, 'commute')).join('')
+        + otherSegs.map(s => segToHtml(s, 'other')).join('');
 
       const row = document.createElement('div');
       row.className = 'timeline-day';
@@ -641,20 +866,228 @@
         </div>
       `;
       row.querySelector('.plan-time-input').addEventListener('change', (e) => {
-        const d = e.target.dataset.date;
+        const d2 = e.target.dataset.date;
         const v = e.target.value;
         if(!state.dailyStudyPlan) state.dailyStudyPlan = {};
         if(v === ''){
-          delete state.dailyStudyPlan[d];
+          delete state.dailyStudyPlan[d2];
         } else {
           let n = parseFloat(v);
           if(isNaN(n) || n < 0) n = 0;
-          state.dailyStudyPlan[d] = n;
+          state.dailyStudyPlan[d2] = n;
         }
         saveState();
         renderStudyPlanTotal();
       });
       wrap.appendChild(row);
+    });
+  }
+
+  // ---------- 可処分時間の設定カレンダー ----------
+  document.querySelectorAll('.seg-btn[data-cal]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.calendarView = btn.dataset.cal;
+      saveState();
+      renderCalendar();
+    });
+  });
+
+  document.getElementById('calPrevBtn').addEventListener('click', () => {
+    if((state.calendarView || 'month') === 'week') calendarAnchor.setDate(calendarAnchor.getDate() - 7);
+    else calendarAnchor.setMonth(calendarAnchor.getMonth() - 1);
+    renderCalendar();
+  });
+  document.getElementById('calNextBtn').addEventListener('click', () => {
+    if((state.calendarView || 'month') === 'week') calendarAnchor.setDate(calendarAnchor.getDate() + 7);
+    else calendarAnchor.setMonth(calendarAnchor.getMonth() + 1);
+    renderCalendar();
+  });
+  document.getElementById('calTodayBtn').addEventListener('click', () => {
+    calendarAnchor = new Date(); calendarAnchor.setHours(0,0,0,0);
+    renderCalendar();
+  });
+
+  function updateCalToggleActive(){
+    document.querySelectorAll('.seg-btn[data-cal]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.cal === (state.calendarView || 'month'));
+    });
+  }
+
+  function eventsSummaryForDate(date){
+    const shifts = state.shifts.filter(s => s.date === date);
+    const others = (state.otherEvents || []).filter(e => e.date === date);
+    return { shifts, others };
+  }
+
+  function renderCalendar(){
+    updateCalToggleActive();
+    const view = state.calendarView || 'month';
+    if(view === 'week') renderCalendarWeek();
+    else renderCalendarMonth();
+  }
+
+  function renderCalendarMonth(){
+    const wrap = document.getElementById('calendarWrap');
+    const label = document.getElementById('calRangeLabel');
+    const y = calendarAnchor.getFullYear(), m = calendarAnchor.getMonth();
+    label.textContent = `${y}年${m+1}月`;
+
+    const firstOfMonth = new Date(y, m, 1);
+    const startOffset = firstOfMonth.getDay(); // 0=日
+    const gridStart = new Date(firstOfMonth); gridStart.setDate(gridStart.getDate() - startOffset);
+    const todayStr = fmtDate(new Date());
+
+    const wdHtml = WEEKDAYS.map(w => `<div class="cal-wd">${w}</div>`).join('');
+    let cellsHtml = '';
+    for(let i = 0; i < 42; i++){
+      const d = new Date(gridStart); d.setDate(d.getDate() + i);
+      const dateStr = fmtDate(d);
+      const isOtherMonth = d.getMonth() !== m;
+      const { shifts, others } = eventsSummaryForDate(dateStr);
+      const chips = [
+        ...shifts.map(s => `<span class="cal-chip">${escapeHtml(s.place || 'シフト')} ${s.start}</span>`),
+        ...others.map(e => `<span class="cal-chip other">${escapeHtml(e.label || 'その他')} ${e.start}</span>`),
+      ].slice(0, 3).join('');
+      const moreCount = (shifts.length + others.length) - 3;
+      const moreHtml = moreCount > 0 ? `<span class="cal-chip">+${moreCount}</span>` : '';
+      const classes = ['cal-day-cell'];
+      if(isOtherMonth) classes.push('other-month');
+      if(dateStr === todayStr) classes.push('today');
+      if(dateStr === selectedEditorDate) classes.push('selected');
+      cellsHtml += `
+        <div class="${classes.join(' ')}" data-date="${dateStr}">
+          <div class="cal-day-num">${d.getDate()}</div>
+          <div class="cal-day-events">${chips}${moreHtml}</div>
+        </div>
+      `;
+    }
+    wrap.innerHTML = `<div class="cal-month-grid">${wdHtml}${cellsHtml}</div>`;
+    wrap.querySelectorAll('.cal-day-cell').forEach(cell => {
+      cell.addEventListener('click', () => {
+        selectedEditorDate = cell.dataset.date;
+        renderCalendar();
+        renderDayEditor();
+      });
+    });
+  }
+
+  function renderCalendarWeek(){
+    const wrap = document.getElementById('calendarWrap');
+    const label = document.getElementById('calRangeLabel');
+    const weekStart = new Date(calendarAnchor); weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate() + 6);
+    label.textContent = `${fmtDate(weekStart).slice(5)} 〜 ${fmtDate(weekEnd).slice(5)}`;
+
+    const todayStr = fmtDate(new Date());
+    let rowsHtml = '';
+    for(let i = 0; i < 7; i++){
+      const d = new Date(weekStart); d.setDate(d.getDate() + i);
+      const dateStr = fmtDate(d);
+      const wd = WEEKDAYS[d.getDay()];
+      const { shifts, others } = eventsSummaryForDate(dateStr);
+      const segsHtml = [
+        ...shifts.map(s => {
+          const ss = Math.max(toMin(s.start), WINDOW_START), se = Math.min(toMin(s.end), WINDOW_END);
+          if(se <= ss) return '';
+          return `<div class="seg" style="left:${((ss-WINDOW_START)/WINDOW_LEN*100)}%;width:${((se-ss)/WINDOW_LEN*100)}%;" title="${escapeHtml(s.place)} ${s.start}-${s.end}"></div>`;
+        }),
+        ...others.map(e => {
+          const es = Math.max(toMin(e.start), WINDOW_START), ee = Math.min(toMin(e.end), WINDOW_END);
+          if(ee <= es) return '';
+          return `<div class="seg other" style="left:${((es-WINDOW_START)/WINDOW_LEN*100)}%;width:${((ee-es)/WINDOW_LEN*100)}%;" title="${escapeHtml(e.label||'その他')} ${e.start}-${e.end}"></div>`;
+        })
+      ].join('');
+      const classes = ['cal-week-row'];
+      if(dateStr === selectedEditorDate) classes.push('selected');
+      rowsHtml += `
+        <div class="${classes.join(' ')}" data-date="${dateStr}">
+          <div class="cal-week-label">${dateStr.slice(5).replace('-','/')}${dateStr===todayStr ? '(今日)' : `(${wd})`}</div>
+          <div class="track">${segsHtml}</div>
+        </div>
+      `;
+    }
+    wrap.innerHTML = `<div class="cal-week-grid">${rowsHtml}</div>`;
+    wrap.querySelectorAll('.cal-week-row').forEach(row => {
+      row.addEventListener('click', () => {
+        selectedEditorDate = row.dataset.date;
+        renderCalendar();
+        renderDayEditor();
+      });
+    });
+  }
+
+  function renderDayEditor(){
+    const wrap = document.getElementById('dayEditorWrap');
+    const date = selectedEditorDate;
+    const d = new Date(date + 'T00:00:00');
+    const wd = WEEKDAYS[d.getDay()];
+    const { shifts, others } = eventsSummaryForDate(date);
+
+    const itemsHtml = [
+      ...shifts.map(s => `
+        <div class="day-editor-item">
+          <span><span class="tag-dot"></span>${escapeHtml(s.place || 'シフト')} ${s.start}-${s.end}</span>
+          <button data-type="shift" data-date="${s.date}" data-start="${s.start}" data-end="${s.end}" data-place="${escapeHtml(s.place || '')}" title="削除">×</button>
+        </div>
+      `),
+      ...others.map(e => `
+        <div class="day-editor-item">
+          <span><span class="tag-dot other"></span>${escapeHtml(e.label || 'その他予定')} ${e.start}-${e.end}</span>
+          <button data-type="other" data-id="${e.id}" title="削除">×</button>
+        </div>
+      `)
+    ].join('') || '<p class="empty-note" style="padding:4px 0;">この日の予定はまだありません。</p>';
+
+    wrap.innerHTML = `
+      <div class="day-editor">
+        <p class="day-editor-title">${date}(${wd})の予定</p>
+        <div class="day-editor-list">${itemsHtml}</div>
+        <div class="day-editor-form">
+          <select id="dayEditorType">
+            <option value="shift">アルバイト</option>
+            <option value="other">その他予定</option>
+          </select>
+          <input type="time" id="dayEditorStart" value="09:00">
+          <span>〜</span>
+          <input type="time" id="dayEditorEnd" value="17:00">
+          <input type="text" id="dayEditorLabel" placeholder="勤務先名 or 内容">
+          <button class="btn" id="dayEditorAddBtn">追加</button>
+        </div>
+      </div>
+    `;
+
+    wrap.querySelectorAll('.day-editor-item button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if(btn.dataset.type === 'shift'){
+          deleteShiftAt(btn.dataset.date, btn.dataset.start, btn.dataset.end, btn.dataset.place);
+        } else {
+          deleteOtherEvent(btn.dataset.id);
+        }
+        renderTimeline();
+        renderCommuteList();
+        renderCalendar();
+        renderDayEditor();
+      });
+    });
+
+    document.getElementById('dayEditorAddBtn').addEventListener('click', () => {
+      const type = document.getElementById('dayEditorType').value;
+      const start = document.getElementById('dayEditorStart').value;
+      const end = document.getElementById('dayEditorEnd').value;
+      const label = document.getElementById('dayEditorLabel').value.trim();
+      if(!start || !end || end <= start){
+        alert('開始・終了時刻を正しく入力してください。');
+        return;
+      }
+      if(type === 'shift'){
+        addShiftManual(date, start, end, label || '勤務先未設定');
+      } else {
+        addOtherEvent(date, start, end, label);
+      }
+      renderTimeline();
+      renderCommuteList();
+      renderCalendar();
+      renderDayEditor();
     });
   }
 
@@ -1253,6 +1686,9 @@
   function render(){
     syncStudyLogsFromKakomon();
     renderCountdown();
+    renderCommuteList();
+    renderCalendar();
+    renderDayEditor();
     renderTimeline();
     renderLogs();
     renderKakomon();
