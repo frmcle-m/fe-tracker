@@ -950,7 +950,7 @@
       });
       dayEvents.forEach(ev => {
         const [es, ee] = clip(toMin(ev.start), toMin(ev.end));
-        if(ee > es) otherSegs.push({ start: es, end: ee, title: `${ev.label || 'その他予定'} ${ev.start}-${ev.end}` });
+        if(ee > es) otherSegs.push({ start: es, end: ee, title: `${ev.label || '予定'} ${ev.start}-${ev.end}` });
       });
 
       const allIntervals = [...shiftSegs, ...commuteSegs, ...otherSegs].map(s => [s.start, s.end]);
@@ -1078,7 +1078,7 @@
       const { shifts, others } = eventsSummaryForDate(dateStr);
       const chips = [
         ...shifts.map(s => `<span class="cal-chip">${escapeHtml(s.place || 'シフト')} ${s.start}</span>`),
-        ...others.map(e => `<span class="cal-chip other">${escapeHtml(e.label || 'その他')} ${e.start}</span>`),
+        ...others.map(e => `<span class="cal-chip other">${escapeHtml(e.label || '予定')} ${e.start}</span>`),
       ].slice(0, 3).join('');
       const moreCount = (shifts.length + others.length) - 3;
       const moreHtml = moreCount > 0 ? `<span class="cal-chip">+${moreCount}</span>` : '';
@@ -1205,7 +1205,7 @@
       });
       others.forEach(e => {
         const [es, ee] = clip(toMin(e.start), toMin(e.end));
-        if(ee > es) segsHtml.push(`<div class="seg other" style="left:${((es-DAY_START)/DAY_LEN*100)}%;width:${((ee-es)/DAY_LEN*100)}%;" title="${escapeHtml(e.label||'その他')} ${e.start}-${e.end}"></div>`);
+        if(ee > es) segsHtml.push(`<div class="seg other" style="left:${((es-DAY_START)/DAY_LEN*100)}%;width:${((ee-es)/DAY_LEN*100)}%;" title="${escapeHtml(e.label||'予定')} ${e.start}-${e.end}"></div>`);
       });
       const classes = ['cal-week-row'];
       if(dateStr === selectedEditorDate) classes.push('selected');
@@ -1250,7 +1250,7 @@
       `),
       ...others.map(e => `
         <div class="day-editor-item">
-          <span><span class="tag-dot other"></span>${escapeHtml(e.label || 'その他予定')} ${e.start}-${e.end}</span>
+          <span><span class="tag-dot other"></span>${escapeHtml(e.label || '予定')} ${e.start}-${e.end}</span>
           <button data-type="other" data-id="${e.id}" title="削除">×</button>
         </div>
       `)
