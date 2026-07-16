@@ -6,6 +6,7 @@
 <title>FEトラッカー | 基本情報技術者試験</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;800&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   :root{
     --bg:#F3F5F7;
@@ -250,17 +251,20 @@
   .period-check input{width:15px;height:15px;accent-color:var(--primary);cursor:pointer;}
   .period-inputs{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);}
   .period-inputs input[type=date]{border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-family:inherit;font-size:13px;background:var(--bg);color:var(--ink);}
-  .day-select-row{display:flex;align-items:center;gap:10px;margin:16px 0 8px;flex-wrap:wrap;}
-  .day-select-row select{border:1px solid var(--line);border-radius:8px;padding:7px 10px;background:var(--surface);font-family:inherit;font-size:13px;}
-  .day-summary{font-size:13.5px;color:var(--primary-deep);margin:0 0 10px;font-weight:700;}
-  .breakdown-row{display:grid;grid-template-columns:160px 1fr 54px 46px;align-items:center;gap:10px;padding:6px 0;font-size:13px;border-bottom:1px solid var(--surface-alt);}
+  .day-summary{font-size:13.5px;color:var(--primary-deep);margin:0 0 6px;font-weight:700;}
+  .cio-legend{display:flex;gap:16px;font-size:11.5px;color:var(--ink-soft);margin-bottom:14px;}
+  .cio-legend span{display:inline-flex;align-items:center;gap:6px;}
+  .field-group{margin-bottom:18px;}
+  .field-group:last-child{margin-bottom:0;}
+  .field-group-title{font-size:13.5px;font-weight:700;color:var(--primary-deep);margin:0 0 6px;padding-bottom:4px;border-bottom:1px solid var(--surface-alt);}
+  .breakdown-row{display:grid;grid-template-columns:150px 1fr 130px 46px;align-items:center;gap:10px;padding:6px 0;font-size:13px;border-bottom:1px solid var(--surface-alt);}
   .breakdown-row:last-child{border-bottom:none;}
-  .bd-names{display:flex;flex-direction:column;line-height:1.35;}
-  .bd-field{font-size:10.5px;color:var(--ink-soft);}
   .bd-name{color:var(--ink);}
-  .bd-bar-outer{background:var(--surface-alt);border-radius:5px;height:8px;overflow:hidden;}
-  .bd-bar-inner{height:100%;border-radius:5px;}
-  .bd-num{color:var(--ink-soft);font-size:12px;text-align:right;}
+  .bd-bar-outer{background:var(--surface-alt);border-radius:5px;height:8px;overflow:hidden;display:flex;}
+  .bd-bar-correct{height:100%;background:var(--free);}
+  .bd-bar-incorrect{height:100%;background:var(--busy);}
+  .bd-bar-unanswered{height:100%;background:var(--line);}
+  .bd-num{color:var(--ink-soft);font-size:11.5px;text-align:right;}
   .tag{font-size:10.5px;padding:3px 8px;border-radius:20px;font-weight:700;text-align:center;}
   .tag.weak{background:#F5E4DE;color:#A85B41;}
   .tag.strong{background:#E1EEE7;color:#3F7A5C;}
@@ -274,6 +278,10 @@
   .legend-chip .dot{width:9px;height:9px;border-radius:50%;}
   .chart-title{font-size:13.5px;font-weight:700;color:var(--ink);margin:20px 0 8px;}
   .chart-title:first-of-type{margin-top:0;}
+
+  /* sync */
+  .sync-row{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap;}
+  .sync-row input[type=text]{flex:1;min-width:220px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:13px;background:var(--bg);color:var(--ink);}
 
   .footer-note{
     text-align:center;font-size:11.5px;color:var(--ink-soft);margin-top:8px;
@@ -317,6 +325,14 @@
       <input type="number" id="sleepHoursInput" min="0" max="12" step="0.5" value="7">
       <span>時間</span>
     </div>
+    <div class="period-row">
+      <label class="period-check"><input type="checkbox" id="timelinePeriodAllChk" checked>全期間</label>
+      <div class="period-inputs" id="timelinePeriodInputs" style="display:none;">
+        <input type="date" id="timelinePeriodStart">
+        <span>〜</span>
+        <input type="date" id="timelinePeriodEnd">
+      </div>
+    </div>
     <div class="legend">
       <span><span class="dot" style="background:var(--busy)"></span>予定あり</span>
       <span><span class="dot" style="background:var(--free-bg);border:1px solid var(--line)"></span>勉強可能</span>
@@ -342,10 +358,6 @@
       </div>
     </div>
 
-    <div class="day-select-row">
-      <label style="font-size:12.5px;color:var(--ink-soft);">日付を選択</label>
-      <select id="kakomonDateSelect"></select>
-    </div>
     <p class="day-summary" id="daySummary"></p>
     <div id="dayBreakdownWrap"></div>
 
@@ -363,11 +375,11 @@
 
   <section>
     <h2>学習ログ <span class="num">04</span></h2>
-    <p class="section-desc">勉強した日・時間・内容を記録します。</p>
+    <p class="section-desc">勉強した日・時間・内容を記録します。過去問道場のCSVを取り込むと、その日の学習問題数が自動で記録されます(時間・内容は任意入力です)。</p>
     <div class="log-form">
       <input type="date" id="logDate">
-      <input type="number" id="logHours" placeholder="時間" step="0.5" min="0">
-      <input type="text" id="logTopic" placeholder="内容(例: 過去問道場 科目B)">
+      <input type="number" id="logHours" placeholder="時間(任意)" step="0.5" min="0">
+      <input type="text" id="logTopic" placeholder="内容(任意, 例: 過去問道場 科目B)">
       <button class="btn" id="addLogBtn">記録する</button>
     </div>
     <div class="log-list" id="logList"></div>
@@ -388,7 +400,21 @@
     <div id="groupsWrap"></div>
   </section>
 
-  <p class="footer-note">データはこの端末のこのアプリ内にのみ保存されます。</p>
+  <section>
+    <h2>クラウド同期 <span class="num">06</span></h2>
+    <p class="section-desc">Googleアカウントでログインすると、Google Driveの専用領域(あなた以外は見えません)にデータが保存され、同じGoogleアカウントでログインした別の端末からも同じ内容を見られます。初回のみ、ご自身のGoogle Cloud ConsoleでOAuthクライアントIDを取得し、下の欄に入力してください。</p>
+    <div class="sync-row">
+      <input type="text" id="googleClientIdInput" placeholder="Google OAuthクライアントID (例: xxxxx.apps.googleusercontent.com)">
+      <button class="btn secondary" id="saveClientIdBtn">保存</button>
+    </div>
+    <div class="sync-row">
+      <button class="btn" id="googleSignInBtn">Googleでログインして同期</button>
+      <button class="btn secondary" id="googleSignOutBtn" style="display:none;">ログアウト</button>
+      <span class="import-msg" id="syncStatusMsg"></span>
+    </div>
+  </section>
+
+  <p class="footer-note">データはこの端末に保存されます。Googleアカウントでログインすると、そのアカウントを通じてのみ他の端末とも共有されます。</p>
 </div>
 
 <script>
@@ -436,7 +462,8 @@
     checklist: {},     // topicKey: bool
     kakomonRecords: [], // {url,date,field,major,minor,correct,label} from 過去問道場CSV
     trendGranularity: 'field', // 'field' (分野名) or 'major' (大分類)
-    analysisPeriod: { all: true, start: '', end: '' } // 過去問道場CSV分析の対象期間
+    analysisPeriod: { all: true, start: '', end: '' }, // 過去問道場CSV分析の対象期間
+    timelinePeriod: { all: true, start: '', end: '' } // 週間可処分時間の表示期間
   };
 
   async function loadState(){
@@ -458,6 +485,7 @@
     }catch(e){
       console.error('保存に失敗しました', e);
     }
+    scheduleCloudPush();
   }
 
   // ---------- Year select ----------
@@ -546,6 +574,38 @@
     renderTimeline();
   });
 
+  document.getElementById('timelinePeriodAllChk').addEventListener('change', (e) => {
+    if(!state.timelinePeriod) state.timelinePeriod = { all: true, start: '', end: '' };
+    state.timelinePeriod.all = e.target.checked;
+    document.getElementById('timelinePeriodInputs').style.display = e.target.checked ? 'none' : 'flex';
+    saveState();
+    renderTimeline();
+  });
+
+  document.getElementById('timelinePeriodStart').addEventListener('change', (e) => {
+    if(!state.timelinePeriod) state.timelinePeriod = { all: true, start: '', end: '' };
+    state.timelinePeriod.start = e.target.value;
+    saveState();
+    renderTimeline();
+  });
+
+  document.getElementById('timelinePeriodEnd').addEventListener('change', (e) => {
+    if(!state.timelinePeriod) state.timelinePeriod = { all: true, start: '', end: '' };
+    state.timelinePeriod.end = e.target.value;
+    saveState();
+    renderTimeline();
+  });
+
+  function filteredShifts(){
+    const p = state.timelinePeriod || { all: true, start: '', end: '' };
+    if(p.all || (!p.start && !p.end)) return state.shifts;
+    return state.shifts.filter(s => {
+      if(p.start && s.date < p.start) return false;
+      if(p.end && s.date > p.end) return false;
+      return true;
+    });
+  }
+
   // ---------- Timeline ----------
   const WINDOW_START = 6 * 60;  // 06:00
   const WINDOW_END = 24 * 60;   // 24:00
@@ -556,7 +616,16 @@
     return h*60+m;
   }
 
+  function syncTimelinePeriodControls(){
+    const p = state.timelinePeriod || { all: true, start: '', end: '' };
+    document.getElementById('timelinePeriodAllChk').checked = p.all;
+    document.getElementById('timelinePeriodInputs').style.display = p.all ? 'none' : 'flex';
+    document.getElementById('timelinePeriodStart').value = p.start || '';
+    document.getElementById('timelinePeriodEnd').value = p.end || '';
+  }
+
   function renderTimeline(){
+    syncTimelinePeriodControls();
     const sleepInput = document.getElementById('sleepHoursInput');
     sleepInput.value = (typeof state.sleepHours === 'number' ? state.sleepHours : 7);
     const wrap = document.getElementById('timelineWrap');
@@ -565,8 +634,13 @@
       wrap.innerHTML = '<p class="empty-note">まだ予定が取り込まれていません。上のフォームからシフトボードのテキストを貼り付けてください。</p>';
       return;
     }
+    const periodShifts = filteredShifts();
+    if(periodShifts.length === 0){
+      wrap.innerHTML = '<p class="empty-note">選択した期間内の予定がありません。</p>';
+      return;
+    }
     const byDate = {};
-    state.shifts.forEach(s => {
+    periodShifts.forEach(s => {
       if(!byDate[s.date]) byDate[s.date] = [];
       byDate[s.date].push(s);
     });
@@ -635,13 +709,21 @@
   // ---------- Study log ----------
   document.getElementById('addLogBtn').addEventListener('click', () => {
     const date = document.getElementById('logDate').value;
-    const hours = parseFloat(document.getElementById('logHours').value);
+    const hoursRaw = document.getElementById('logHours').value;
     const topic = document.getElementById('logTopic').value.trim();
-    if(!date || isNaN(hours) || hours <= 0){
-      alert('日付と時間(0より大きい数値)を入力してください。');
+    if(!date){
+      alert('日付を入力してください。');
       return;
     }
-    state.logs.push({ id: Date.now().toString(), date, hours, topic });
+    let hours = null;
+    if(hoursRaw !== ''){
+      hours = parseFloat(hoursRaw);
+      if(isNaN(hours) || hours <= 0){
+        alert('時間を入力する場合は0より大きい数値にしてください。');
+        return;
+      }
+    }
+    state.logs.push({ id: Date.now().toString(), date, hours, topic, questionCount: null, source: 'manual' });
     state.logs.sort((a,b) => b.date.localeCompare(a.date));
     document.getElementById('logHours').value = '';
     document.getElementById('logTopic').value = '';
@@ -655,6 +737,24 @@
     renderLogs();
   }
 
+  // 過去問道場CSVを取り込んだ日は、自動で学習ログ(学習問題数)を記録・更新する
+  function syncStudyLogsFromKakomon(){
+    const countByDate = {};
+    state.kakomonRecords.forEach(r => {
+      countByDate[r.date] = (countByDate[r.date] || 0) + 1;
+    });
+    Object.entries(countByDate).forEach(([date, count]) => {
+      const id = 'csv_' + date;
+      const existing = state.logs.find(l => l.id === id);
+      if(existing){
+        existing.questionCount = count;
+      } else {
+        state.logs.push({ id, date, hours: null, topic: '', questionCount: count, source: 'csv' });
+      }
+    });
+    state.logs.sort((a,b) => b.date.localeCompare(a.date));
+  }
+
   function renderLogs(){
     const list = document.getElementById('logList');
     list.innerHTML = '';
@@ -664,19 +764,24 @@
       state.logs.forEach(l => {
         const item = document.createElement('div');
         item.className = 'log-item';
+        const parts = [l.date];
+        if(l.hours != null) parts.push(`<b>${l.hours}h</b>`);
+        if(l.questionCount) parts.push(`${l.questionCount}問`);
+        if(l.topic) parts.push(escapeHtml(l.topic));
+        const badge = l.source === 'csv' ? ' <span class="tag strong">CSV自動</span>' : '';
         item.innerHTML = `
-          <span>${l.date} ・ <b>${l.hours}h</b>${l.topic ? ' ・ ' + escapeHtml(l.topic) : ''}</span>
+          <span>${parts.join(' ・ ')}${badge}</span>
           <button title="削除" data-id="${l.id}">×</button>
         `;
         item.querySelector('button').addEventListener('click', (e) => deleteLog(e.target.dataset.id));
         list.appendChild(item);
       });
     }
-    const total = state.logs.reduce((sum,l) => sum + l.hours, 0);
+    const total = state.logs.reduce((sum,l) => sum + (l.hours || 0), 0);
     const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate()-7);
     const weekTotal = state.logs
       .filter(l => new Date(l.date+'T00:00:00') >= sevenDaysAgo)
-      .reduce((sum,l) => sum + l.hours, 0);
+      .reduce((sum,l) => sum + (l.hours || 0), 0);
     const days = new Set(state.logs.map(l => l.date)).size;
     document.getElementById('totalHours').textContent = total.toFixed(1) + 'h';
     document.getElementById('weekHours').textContent = weekTotal.toFixed(1) + 'h';
@@ -691,6 +796,42 @@
 
   // ---------- Kakomon CSV analysis ----------
   const CAT_PALETTE = ['#5C82A8','#8FB9A8','#D8A48F','#9C89B8','#4E9A9A','#C9A66B','#7A8CA6','#B97A85','#6E9B6E','#8676AE','#A5764F'];
+
+  // 過去問道場(fe-siken.com)の公式カテゴリ順(分野別過去問題ページより)
+  const FIELD_ORDER = ['テクノロジ系', 'マネジメント系', 'ストラテジ系'];
+  const CATEGORY_ORDER = {
+    'テクノロジ系': ['基礎理論','アルゴリズムとプログラミング','コンピュータ構成要素','システム構成要素','ソフトウェア','ハードウェア','ユーザーインタフェース','情報メディア','データベース','ネットワーク','セキュリティ','システム開発技術','ソフトウェア開発管理技術'],
+    'マネジメント系': ['プロジェクトマネジメント','サービスマネジメント','システム監査'],
+    'ストラテジ系': ['システム戦略','システム企画','経営戦略マネジメント','技術戦略マネジメント','ビジネスインダストリ','企業活動','法務'],
+  };
+
+  function buildFieldGroups(records){
+    const byField = {};
+    records.forEach(r => {
+      const fieldLabel = r.field || 'その他';
+      const minorLabel = r.minor || r.major || '分類なし';
+      if(!byField[fieldLabel]) byField[fieldLabel] = {};
+      if(!byField[fieldLabel][minorLabel]) byField[fieldLabel][minorLabel] = { correct:0, incorrect:0, unanswered:0 };
+      const bucket = byField[fieldLabel][minorLabel];
+      if(r.correct === true) bucket.correct++;
+      else if(r.correct === false) bucket.incorrect++;
+      else bucket.unanswered++;
+    });
+    const fieldNames = Object.keys(byField);
+    const orderedFields = FIELD_ORDER.filter(f => fieldNames.includes(f))
+      .concat(fieldNames.filter(f => !FIELD_ORDER.includes(f)).sort());
+    return orderedFields.map(fieldName => {
+      const minors = byField[fieldName];
+      const order = CATEGORY_ORDER[fieldName] || [];
+      const minorNames = Object.keys(minors);
+      const orderedMinors = order.filter(m => minorNames.includes(m))
+        .concat(minorNames.filter(m => !order.includes(m)).sort());
+      return {
+        field: fieldName,
+        rows: orderedMinors.map(m => ({ name: m, ...minors[m] }))
+      };
+    });
+  }
 
   function parseCSV(text){
     const rows = [];
@@ -759,8 +900,8 @@
         const row = rows[r];
         if(!row || row.length < 2) continue;
         const correctRaw = (row[idx.correct] || '').trim();
+        // ○=正解, ×=誤答, それ以外(-など)=未回答。未回答も記録として残す。
         const correct = correctRaw === '○' ? true : (correctRaw === '×' ? false : null);
-        if(correct === null) continue;
         const dateRaw = (row[idx.date] || '').trim();
         const dm = dateRaw.match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/);
         if(!dm) continue;
@@ -798,16 +939,20 @@
       msg.textContent = '取り込み中にエラーが発生しました。';
     }
     e.target.value = '';
+    syncStudyLogsFromKakomon();
     saveState();
     renderKakomon();
+    renderLogs();
   });
 
   document.getElementById('clearCsvBtn').addEventListener('click', () => {
     if(!confirm('取込み済みの過去問道場の記録をすべて削除しますか？')) return;
     state.kakomonRecords = [];
+    state.logs = state.logs.filter(l => l.source !== 'csv');
     saveState();
     document.getElementById('csvImportMsg').textContent = '削除しました。';
     renderKakomon();
+    renderLogs();
   });
 
   document.getElementById('periodAllChk').addEventListener('change', (e) => {
@@ -846,17 +991,7 @@
     return [...new Set(filteredKakomonRecords().map(r => r.date))].sort();
   }
 
-  function renderDaySelect(){
-    const sel = document.getElementById('kakomonDateSelect');
-    const dates = kakomonDates().slice().reverse();
-    const prevVal = sel.value;
-    sel.innerHTML = dates.map(d => `<option value="${d}">${d}</option>`).join('');
-    if(dates.includes(prevVal)) sel.value = prevVal;
-    else if(dates.length) sel.value = dates[0];
-  }
-
-  function renderDayBreakdown(){
-    const sel = document.getElementById('kakomonDateSelect');
+  function renderBreakdown(){
     const wrap = document.getElementById('dayBreakdownWrap');
     const summaryEl = document.getElementById('daySummary');
     if(state.kakomonRecords.length === 0){
@@ -864,49 +999,57 @@
       summaryEl.textContent = '';
       return;
     }
-    const periodRecords = filteredKakomonRecords();
-    if(periodRecords.length === 0){
+    const records = filteredKakomonRecords();
+    if(records.length === 0){
       wrap.innerHTML = '<p class="empty-note">選択した期間内の記録がありません。</p>';
       summaryEl.textContent = '';
       return;
     }
-    const date = sel.value;
-    const dayRecords = periodRecords.filter(r => r.date === date);
-    if(dayRecords.length === 0){
-      wrap.innerHTML = '<p class="empty-note">この日の記録がありません。</p>';
-      summaryEl.textContent = '';
-      return;
-    }
-    const total = dayRecords.length;
-    const correctN = dayRecords.filter(r => r.correct).length;
-    summaryEl.textContent = `${date}の学習: ${total}問中 ${correctN}問正解(正答率 ${Math.round(correctN/total*100)}%)`;
+    const total = records.length;
+    const correctN = records.filter(r => r.correct === true).length;
+    const incorrectN = records.filter(r => r.correct === false).length;
+    const unansweredN = records.filter(r => r.correct === null).length;
+    const answeredN = correctN + incorrectN;
+    const rateText = answeredN > 0 ? `正答率 ${Math.round(correctN/answeredN*100)}%` : '正答率 -';
+    summaryEl.textContent = `対象期間の学習: ${total}問(正解${correctN}・誤答${incorrectN}・未回答${unansweredN}) ${rateText}`;
 
-    const byMinor = {};
-    dayRecords.forEach(r => {
-      const fieldLabel = r.field || '分野なし';
-      const minorLabel = r.minor || r.major || '分類なし';
-      const k = `${fieldLabel}__${minorLabel}`;
-      if(!byMinor[k]) byMinor[k] = { field: fieldLabel, name: minorLabel, correct:0, total:0 };
-      byMinor[k].total++;
-      if(r.correct) byMinor[k].correct++;
-    });
-    const rows = Object.values(byMinor).map(v => ({ field: v.field, name: v.name, rate: v.correct/v.total, correct: v.correct, total: v.total }));
-    rows.sort((a,b) => a.rate - b.rate);
+    const legend = `
+      <div class="cio-legend">
+        <span><span class="dot" style="background:var(--free)"></span>正解</span>
+        <span><span class="dot" style="background:var(--busy)"></span>誤答</span>
+        <span><span class="dot" style="background:var(--line);border:1px solid var(--ink-soft)"></span>未回答</span>
+      </div>
+    `;
 
-    wrap.innerHTML = rows.map(r => {
-      let tag = '';
-      let barColor = 'var(--primary)';
-      if(r.rate < 0.6){ tag = '<span class="tag weak">苦手</span>'; barColor = 'var(--busy)'; }
-      else if(r.rate >= 0.8){ tag = '<span class="tag strong">得意</span>'; barColor = 'var(--free)'; }
-      return `
-        <div class="breakdown-row">
-          <span class="bd-names"><span class="bd-field">${escapeHtml(r.field)}</span><span class="bd-name">${escapeHtml(r.name)}</span></span>
-          <div class="bd-bar-outer"><div class="bd-bar-inner" style="width:${Math.round(r.rate*100)}%;background:${barColor}"></div></div>
-          <span class="bd-num">${r.correct}/${r.total}</span>
-          ${tag}
-        </div>
-      `;
+    const groups = buildFieldGroups(records);
+    const groupsHtml = groups.map(g => {
+      const rowsHtml = g.rows.map(r => {
+        const ans = r.correct + r.incorrect;
+        const rate = ans > 0 ? r.correct / ans : null;
+        let tag = '';
+        if(rate !== null){
+          if(rate < 0.6) tag = '<span class="tag weak">苦手</span>';
+          else if(rate >= 0.8) tag = '<span class="tag strong">得意</span>';
+        }
+        const rowTotal = r.correct + r.incorrect + r.unanswered;
+        const pct = n => rowTotal > 0 ? (n / rowTotal * 100) : 0;
+        return `
+          <div class="breakdown-row">
+            <span class="bd-name">${escapeHtml(r.name)}</span>
+            <div class="bd-bar-outer">
+              <div class="bd-bar-correct" style="width:${pct(r.correct)}%"></div>
+              <div class="bd-bar-incorrect" style="width:${pct(r.incorrect)}%"></div>
+              <div class="bd-bar-unanswered" style="width:${pct(r.unanswered)}%"></div>
+            </div>
+            <span class="bd-num">正${r.correct}/誤${r.incorrect}/未${r.unanswered}</span>
+            ${tag}
+          </div>
+        `;
+      }).join('');
+      return `<div class="field-group"><h3 class="field-group-title">${escapeHtml(g.field)}</h3>${rowsHtml}</div>`;
     }).join('');
+
+    wrap.innerHTML = legend + groupsHtml;
   }
 
   function renderOverallTrend(){
@@ -918,7 +1061,9 @@
     const n = dates.length;
     const points = dates.map(d => {
       const recs = filteredKakomonRecords().filter(r => r.date === d);
-      return { rate: recs.filter(r => r.correct).length / recs.length * 100, n: recs.length };
+      const answered = recs.filter(r => r.correct !== null);
+      const rate = answered.length > 0 ? recs.filter(r => r.correct === true).length / answered.length * 100 : 0;
+      return { rate, n: answered.length };
     });
     const x = i => padL + (n > 1 ? i * (innerW / (n - 1)) : innerW / 2);
     const y = rate => padT + innerH - (rate / 100 * innerH);
@@ -977,9 +1122,10 @@
       let anyPoint = false;
       dates.forEach((date, i) => {
         const recs = filteredKakomonRecords().filter(r => r.date === date && r[catKey] === cat);
-        if(recs.length === 0){ started = false; return; }
+        const answered = recs.filter(r => r.correct !== null);
+        if(answered.length === 0){ started = false; return; }
         anyPoint = true;
-        const rate = recs.filter(r => r.correct).length / recs.length * 100;
+        const rate = answered.filter(r => r.correct === true).length / answered.length * 100;
         d += (started ? 'L' : 'M') + ` ${x(i).toFixed(1)} ${y(rate).toFixed(1)} `;
         started = true;
       });
@@ -1003,8 +1149,6 @@
     });
   });
 
-  document.getElementById('kakomonDateSelect').addEventListener('change', renderDayBreakdown);
-
   function syncPeriodControls(){
     const p = state.analysisPeriod || { all: true, start: '', end: '' };
     document.getElementById('periodAllChk').checked = p.all;
@@ -1015,8 +1159,7 @@
 
   function renderKakomon(){
     syncPeriodControls();
-    renderDaySelect();
-    renderDayBreakdown();
+    renderBreakdown();
     renderOverallTrend();
     renderCategoryTrend();
     updateToggleActive();
@@ -1077,6 +1220,7 @@
   }
 
   function render(){
+    syncStudyLogsFromKakomon();
     renderCountdown();
     renderTimeline();
     renderLogs();
@@ -1084,8 +1228,144 @@
     renderChecklist();
   }
 
+  // ---------- Google Drive sync ----------
+  const DRIVE_FILE_NAME = 'fe-tracker-state.json';
+  const GOOGLE_CLIENT_ID_KEY = 'fe-tracker-google-client-id';
+  let googleAccessToken = null;
+  let googleTokenClient = null;
+  let driveFileId = null;
+  let pushTimer = null;
+
+  function getGoogleClientId(){
+    return localStorage.getItem(GOOGLE_CLIENT_ID_KEY) || '';
+  }
+
+  function initGoogleClient(){
+    const clientId = getGoogleClientId();
+    const statusEl = document.getElementById('syncStatusMsg');
+    document.getElementById('googleClientIdInput').value = clientId;
+    if(!clientId){
+      document.getElementById('googleSignInBtn').disabled = true;
+      statusEl.textContent = 'クライアントIDを入力・保存してください。';
+      return;
+    }
+    document.getElementById('googleSignInBtn').disabled = false;
+    if(!window.google || !window.google.accounts){
+      statusEl.textContent = 'Googleログイン機能を読み込み中...';
+      setTimeout(initGoogleClient, 500);
+      return;
+    }
+    googleTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: 'https://www.googleapis.com/auth/drive.appdata',
+      callback: async (resp) => {
+        if(resp.error){
+          statusEl.textContent = 'ログインに失敗しました: ' + resp.error;
+          return;
+        }
+        googleAccessToken = resp.access_token;
+        document.getElementById('googleSignInBtn').style.display = 'none';
+        document.getElementById('googleSignOutBtn').style.display = '';
+        statusEl.textContent = '同期中...';
+        await pullFromDrive();
+      },
+    });
+    statusEl.textContent = '未連携';
+  }
+
+  document.getElementById('saveClientIdBtn').addEventListener('click', () => {
+    const v = document.getElementById('googleClientIdInput').value.trim();
+    localStorage.setItem(GOOGLE_CLIENT_ID_KEY, v);
+    initGoogleClient();
+  });
+
+  document.getElementById('googleSignInBtn').addEventListener('click', () => {
+    if(googleTokenClient) googleTokenClient.requestAccessToken({ prompt: 'consent' });
+  });
+
+  document.getElementById('googleSignOutBtn').addEventListener('click', () => {
+    if(googleAccessToken && window.google){
+      google.accounts.oauth2.revoke(googleAccessToken, () => {});
+    }
+    googleAccessToken = null;
+    driveFileId = null;
+    document.getElementById('googleSignInBtn').style.display = '';
+    document.getElementById('googleSignOutBtn').style.display = 'none';
+    document.getElementById('syncStatusMsg').textContent = '未連携';
+  });
+
+  async function driveFindFile(){
+    const res = await fetch('https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=' + encodeURIComponent(`name='${DRIVE_FILE_NAME}'`) + '&fields=files(id,name)', {
+      headers: { Authorization: 'Bearer ' + googleAccessToken }
+    });
+    const data = await res.json();
+    return (data.files && data.files[0]) ? data.files[0].id : null;
+  }
+
+  async function pullFromDrive(){
+    const statusEl = document.getElementById('syncStatusMsg');
+    try{
+      driveFileId = await driveFindFile();
+      if(driveFileId){
+        const res = await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`, {
+          headers: { Authorization: 'Bearer ' + googleAccessToken }
+        });
+        const remote = await res.json();
+        const hasLocalData = state.shifts.length || state.logs.length || state.kakomonRecords.length;
+        let useRemote = true;
+        if(hasLocalData){
+          useRemote = confirm('クラウドに保存済みのデータがあります。読み込んで今のデータを上書きしますか？\n(キャンセルすると今のデータをクラウドにアップロードします)');
+        }
+        if(useRemote){
+          state = Object.assign(state, remote);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          render();
+          statusEl.textContent = 'クラウドから読み込みました。';
+        } else {
+          await pushToDrive();
+          statusEl.textContent = 'クラウドにアップロードしました。';
+        }
+      } else {
+        await pushToDrive();
+        statusEl.textContent = 'クラウドに新規保存しました。';
+      }
+    }catch(e){
+      statusEl.textContent = '同期に失敗しました。';
+    }
+  }
+
+  async function pushToDrive(){
+    if(!googleAccessToken) return;
+    const content = JSON.stringify(state);
+    const metadata = driveFileId ? { name: DRIVE_FILE_NAME } : { name: DRIVE_FILE_NAME, parents: ['appDataFolder'] };
+    const boundary = '-------fe-tracker-boundary';
+    const body =
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n` +
+      `--${boundary}\r\nContent-Type: application/json\r\n\r\n${content}\r\n--${boundary}--`;
+    const url = driveFileId
+      ? `https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=multipart`
+      : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`;
+    const res = await fetch(url, {
+      method: driveFileId ? 'PATCH' : 'POST',
+      headers: {
+        Authorization: 'Bearer ' + googleAccessToken,
+        'Content-Type': `multipart/related; boundary=${boundary}`
+      },
+      body
+    });
+    const data = await res.json();
+    if(data.id) driveFileId = data.id;
+  }
+
+  function scheduleCloudPush(){
+    if(!googleAccessToken) return;
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(() => { pushToDrive(); }, 1500);
+  }
+
   initYearSelect();
   loadState();
+  initGoogleClient();
 })();
 </script>
 </body>
