@@ -182,6 +182,8 @@
   .legend span{display:inline-flex;align-items:center;gap:6px;}
   .dot{width:10px;height:10px;border-radius:3px;display:inline-block;}
   .empty-note{font-size:13px;color:var(--ink-soft);padding:14px 0;}
+  .sleep-row{display:flex;align-items:center;gap:8px;margin-bottom:14px;font-size:13px;color:var(--ink-soft);}
+  .sleep-row input[type=number]{width:70px;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-family:inherit;font-size:13px;background:var(--bg);color:var(--ink);}
 
   /* log */
   .log-form{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;}
@@ -243,11 +245,18 @@
   /* kakomon csv analysis */
   .csv-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:4px;}
   input[type=file]{font-size:12.5px;font-family:inherit;color:var(--ink-soft);}
+  .period-row{display:flex;align-items:center;gap:14px;margin:12px 0 4px;flex-wrap:wrap;}
+  .period-check{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink);cursor:pointer;}
+  .period-check input{width:15px;height:15px;accent-color:var(--primary);cursor:pointer;}
+  .period-inputs{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);}
+  .period-inputs input[type=date]{border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-family:inherit;font-size:13px;background:var(--bg);color:var(--ink);}
   .day-select-row{display:flex;align-items:center;gap:10px;margin:16px 0 8px;flex-wrap:wrap;}
   .day-select-row select{border:1px solid var(--line);border-radius:8px;padding:7px 10px;background:var(--surface);font-family:inherit;font-size:13px;}
   .day-summary{font-size:13.5px;color:var(--primary-deep);margin:0 0 10px;font-weight:700;}
   .breakdown-row{display:grid;grid-template-columns:160px 1fr 54px 46px;align-items:center;gap:10px;padding:6px 0;font-size:13px;border-bottom:1px solid var(--surface-alt);}
   .breakdown-row:last-child{border-bottom:none;}
+  .bd-names{display:flex;flex-direction:column;line-height:1.35;}
+  .bd-field{font-size:10.5px;color:var(--ink-soft);}
   .bd-name{color:var(--ink);}
   .bd-bar-outer{background:var(--surface-alt);border-radius:5px;height:8px;overflow:hidden;}
   .bd-bar-inner{height:100%;border-radius:5px;}
@@ -302,7 +311,12 @@
 
   <section>
     <h2>週間可処分時間 <span class="num">02</span></h2>
-    <p class="section-desc">1日のうち6:00〜24:00の範囲で、バイトの予定(オレンジ)以外が勉強に使える時間です。</p>
+    <p class="section-desc">1日のうち6:00〜24:00の範囲で、バイトの予定(オレンジ)と睡眠時間を除いた時間が勉強に使える時間です。</p>
+    <div class="sleep-row">
+      <label for="sleepHoursInput">睡眠時間(1日あたり)</label>
+      <input type="number" id="sleepHoursInput" min="0" max="12" step="0.5" value="7">
+      <span>時間</span>
+    </div>
     <div class="legend">
       <span><span class="dot" style="background:var(--busy)"></span>予定あり</span>
       <span><span class="dot" style="background:var(--free-bg);border:1px solid var(--line)"></span>勉強可能</span>
@@ -318,6 +332,15 @@
       <button class="btn secondary" id="clearCsvBtn">取込み済みを全て削除</button>
     </div>
     <p class="import-msg" id="csvImportMsg"></p>
+
+    <div class="period-row">
+      <label class="period-check"><input type="checkbox" id="periodAllChk" checked>全期間</label>
+      <div class="period-inputs" id="periodInputs" style="display:none;">
+        <input type="date" id="periodStart">
+        <span>〜</span>
+        <input type="date" id="periodEnd">
+      </div>
+    </div>
 
     <div class="day-select-row">
       <label style="font-size:12.5px;color:var(--ink-soft);">日付を選択</label>
@@ -408,10 +431,12 @@
   let state = {
     examDate: '',
     shifts: [],       // {date:'YYYY-MM-DD', start:'HH:MM', end:'HH:MM', place:''}
+    sleepHours: 7,     // 1日あたりの睡眠時間(h)。週間可処分時間の計算から差し引く
     logs: [],         // {id, date, hours, topic}
     checklist: {},     // topicKey: bool
     kakomonRecords: [], // {url,date,field,major,minor,correct,label} from 過去問道場CSV
-    trendGranularity: 'field' // 'field' (分野名) or 'major' (大分類)
+    trendGranularity: 'field', // 'field' (分野名) or 'major' (大分類)
+    analysisPeriod: { all: true, start: '', end: '' } // 過去問道場CSV分析の対象期間
   };
 
   async function loadState(){
@@ -513,6 +538,14 @@
     document.getElementById('importMsg').textContent = '削除しました。';
   });
 
+  document.getElementById('sleepHoursInput').addEventListener('change', (e) => {
+    let v = parseFloat(e.target.value);
+    if(isNaN(v) || v < 0) v = 0;
+    state.sleepHours = v;
+    saveState();
+    renderTimeline();
+  });
+
   // ---------- Timeline ----------
   const WINDOW_START = 6 * 60;  // 06:00
   const WINDOW_END = 24 * 60;   // 24:00
@@ -524,6 +557,8 @@
   }
 
   function renderTimeline(){
+    const sleepInput = document.getElementById('sleepHoursInput');
+    sleepInput.value = (typeof state.sleepHours === 'number' ? state.sleepHours : 7);
     const wrap = document.getElementById('timelineWrap');
     wrap.innerHTML = '';
     if(state.shifts.length === 0){
@@ -553,7 +588,8 @@
         return `<div class="seg" style="left:${leftPct}%;width:${widthPct}%;" title="${s.place} ${s.start}-${s.end}"></div>`;
       }).join('');
 
-      const freeHours = ((WINDOW_LEN - busyMin) / 60).toFixed(1);
+      const sleepHours = typeof state.sleepHours === 'number' ? state.sleepHours : 7;
+      const freeHours = Math.max(0, (WINDOW_LEN - busyMin) / 60 - sleepHours).toFixed(1);
 
       const row = document.createElement('div');
       row.className = 'timeline-day';
@@ -774,8 +810,40 @@
     renderKakomon();
   });
 
+  document.getElementById('periodAllChk').addEventListener('change', (e) => {
+    if(!state.analysisPeriod) state.analysisPeriod = { all: true, start: '', end: '' };
+    state.analysisPeriod.all = e.target.checked;
+    document.getElementById('periodInputs').style.display = e.target.checked ? 'none' : 'flex';
+    saveState();
+    renderKakomon();
+  });
+
+  document.getElementById('periodStart').addEventListener('change', (e) => {
+    if(!state.analysisPeriod) state.analysisPeriod = { all: true, start: '', end: '' };
+    state.analysisPeriod.start = e.target.value;
+    saveState();
+    renderKakomon();
+  });
+
+  document.getElementById('periodEnd').addEventListener('change', (e) => {
+    if(!state.analysisPeriod) state.analysisPeriod = { all: true, start: '', end: '' };
+    state.analysisPeriod.end = e.target.value;
+    saveState();
+    renderKakomon();
+  });
+
+  function filteredKakomonRecords(){
+    const p = state.analysisPeriod || { all: true, start: '', end: '' };
+    if(p.all || (!p.start && !p.end)) return state.kakomonRecords;
+    return state.kakomonRecords.filter(r => {
+      if(p.start && r.date < p.start) return false;
+      if(p.end && r.date > p.end) return false;
+      return true;
+    });
+  }
+
   function kakomonDates(){
-    return [...new Set(state.kakomonRecords.map(r => r.date))].sort();
+    return [...new Set(filteredKakomonRecords().map(r => r.date))].sort();
   }
 
   function renderDaySelect(){
@@ -796,8 +864,14 @@
       summaryEl.textContent = '';
       return;
     }
+    const periodRecords = filteredKakomonRecords();
+    if(periodRecords.length === 0){
+      wrap.innerHTML = '<p class="empty-note">選択した期間内の記録がありません。</p>';
+      summaryEl.textContent = '';
+      return;
+    }
     const date = sel.value;
-    const dayRecords = state.kakomonRecords.filter(r => r.date === date);
+    const dayRecords = periodRecords.filter(r => r.date === date);
     if(dayRecords.length === 0){
       wrap.innerHTML = '<p class="empty-note">この日の記録がありません。</p>';
       summaryEl.textContent = '';
@@ -809,12 +883,14 @@
 
     const byMinor = {};
     dayRecords.forEach(r => {
-      const k = r.minor || r.major || r.field || '分類なし';
-      if(!byMinor[k]) byMinor[k] = { correct:0, total:0 };
+      const fieldLabel = r.field || '分野なし';
+      const minorLabel = r.minor || r.major || '分類なし';
+      const k = `${fieldLabel}__${minorLabel}`;
+      if(!byMinor[k]) byMinor[k] = { field: fieldLabel, name: minorLabel, correct:0, total:0 };
       byMinor[k].total++;
       if(r.correct) byMinor[k].correct++;
     });
-    const rows = Object.entries(byMinor).map(([name, v]) => ({ name, rate: v.correct/v.total, correct: v.correct, total: v.total }));
+    const rows = Object.values(byMinor).map(v => ({ field: v.field, name: v.name, rate: v.correct/v.total, correct: v.correct, total: v.total }));
     rows.sort((a,b) => a.rate - b.rate);
 
     wrap.innerHTML = rows.map(r => {
@@ -824,7 +900,7 @@
       else if(r.rate >= 0.8){ tag = '<span class="tag strong">得意</span>'; barColor = 'var(--free)'; }
       return `
         <div class="breakdown-row">
-          <span class="bd-name">${escapeHtml(r.name)}</span>
+          <span class="bd-names"><span class="bd-field">${escapeHtml(r.field)}</span><span class="bd-name">${escapeHtml(r.name)}</span></span>
           <div class="bd-bar-outer"><div class="bd-bar-inner" style="width:${Math.round(r.rate*100)}%;background:${barColor}"></div></div>
           <span class="bd-num">${r.correct}/${r.total}</span>
           ${tag}
@@ -841,7 +917,7 @@
     const innerW = W - padL - padR, innerH = H - padT - padB;
     const n = dates.length;
     const points = dates.map(d => {
-      const recs = state.kakomonRecords.filter(r => r.date === d);
+      const recs = filteredKakomonRecords().filter(r => r.date === d);
       return { rate: recs.filter(r => r.correct).length / recs.length * 100, n: recs.length };
     });
     const x = i => padL + (n > 1 ? i * (innerW / (n - 1)) : innerW / 2);
@@ -875,7 +951,7 @@
     const dates = kakomonDates();
     if(dates.length === 0){ svg.innerHTML = ''; legendEl.innerHTML = ''; return; }
     const catKey = gran === 'field' ? 'field' : 'major';
-    const categories = [...new Set(state.kakomonRecords.map(r => r[catKey]).filter(Boolean))];
+    const categories = [...new Set(filteredKakomonRecords().map(r => r[catKey]).filter(Boolean))];
 
     const W = 640, H = 220, padL = 34, padR = 16, padT = 14, padB = 24;
     const innerW = W - padL - padR, innerH = H - padT - padB;
@@ -900,7 +976,7 @@
       let started = false;
       let anyPoint = false;
       dates.forEach((date, i) => {
-        const recs = state.kakomonRecords.filter(r => r.date === date && r[catKey] === cat);
+        const recs = filteredKakomonRecords().filter(r => r.date === date && r[catKey] === cat);
         if(recs.length === 0){ started = false; return; }
         anyPoint = true;
         const rate = recs.filter(r => r.correct).length / recs.length * 100;
@@ -929,7 +1005,16 @@
 
   document.getElementById('kakomonDateSelect').addEventListener('change', renderDayBreakdown);
 
+  function syncPeriodControls(){
+    const p = state.analysisPeriod || { all: true, start: '', end: '' };
+    document.getElementById('periodAllChk').checked = p.all;
+    document.getElementById('periodInputs').style.display = p.all ? 'none' : 'flex';
+    document.getElementById('periodStart').value = p.start || '';
+    document.getElementById('periodEnd').value = p.end || '';
+  }
+
   function renderKakomon(){
+    syncPeriodControls();
     renderDaySelect();
     renderDayBreakdown();
     renderOverallTrend();
