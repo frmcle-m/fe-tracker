@@ -60,6 +60,7 @@
     color:var(--primary-deep);
     letter-spacing:0.02em;
   }
+  .header-right{display:flex;flex-direction:column;align-items:flex-end;gap:10px;}
   .countdown-box{
     background:var(--surface);
     border-radius:var(--radius);
@@ -173,7 +174,16 @@
     background:var(--free-bg);
     border-radius:6px;
     overflow:hidden;
+    user-select:none;
   }
+  .track::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    background-image:repeating-linear-gradient(to right, rgba(101,114,128,0.22) 0, rgba(101,114,128,0.22) 1px, transparent 1px, transparent calc(100%/18));
+    pointer-events:none;
+  }
+  .track.draggable{cursor:crosshair;}
   .seg{
     position:absolute;
     top:0;bottom:0;
@@ -182,6 +192,7 @@
   }
   .seg.commute{background:var(--commute);}
   .seg.other{background:var(--other);}
+  .seg.selecting{background:var(--primary);opacity:0.55;}
   .track-ruler{display:flex;justify-content:space-between;font-size:9.5px;color:var(--ink-soft);opacity:0.6;margin-top:2px;}
   .free-hours{font-size:12px;color:var(--ink-soft);text-align:right;}
   .free-hours b{color:var(--primary-deep);font-size:14px;}
@@ -201,36 +212,38 @@
   .setting-block:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none;}
   .setting-title{font-size:14px;font-weight:700;color:var(--primary-deep);margin:0 0 8px;}
   .setting-note{font-size:12px;color:var(--ink-soft);margin:0 0 10px;}
-  .commute-list{display:flex;flex-direction:column;gap:8px;}
-  .commute-row{display:flex;align-items:center;gap:10px;font-size:13px;}
-  .commute-row .place-name{flex:1;color:var(--ink);}
-  .commute-row input[type=number]{width:70px;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-family:inherit;font-size:13px;background:var(--bg);color:var(--ink);}
+  .commute-list{display:flex;flex-direction:column;gap:10px;}
+  .commute-row{display:flex;align-items:center;gap:10px;font-size:13px;flex-wrap:wrap;}
+  .commute-row .place-name{flex:1;min-width:100px;color:var(--ink);}
+  .commute-row .commute-field{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-soft);}
+  .commute-row input[type=number]{width:60px;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-family:inherit;font-size:13px;background:var(--bg);color:var(--ink);}
   .cal-toolbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;}
-  .cal-nav{display:flex;align-items:center;gap:8px;}
-  .cal-nav .btn.secondary{padding:6px 12px;font-size:12px;}
-  .cal-range-label{font-size:13.5px;font-weight:700;color:var(--primary-deep);min-width:110px;text-align:center;}
-  .cal-month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+  .cal-nav{display:flex;align-items:center;flex-wrap:wrap;gap:6px;}
+  .cal-nav .btn.secondary{padding:6px 10px;font-size:11.5px;}
+  .cal-range-label{font-size:13px;font-weight:700;color:var(--primary-deep);min-width:90px;text-align:center;}
+  .cal-scroll{overflow-x:auto;margin:0 -2px;padding:0 2px;}
+  .cal-month-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;min-width:420px;}
   .cal-wd{font-size:11px;color:var(--ink-soft);text-align:center;padding:4px 0;font-weight:600;}
   .cal-day-cell{
-    background:var(--bg);border-radius:8px;padding:6px;min-height:64px;cursor:pointer;
-    border:1px solid transparent;font-size:11px;
+    background:var(--bg);border-radius:8px;padding:5px;min-height:56px;cursor:pointer;
+    border:1px solid transparent;font-size:10.5px;min-width:0;overflow:hidden;box-sizing:border-box;
   }
   .cal-day-cell:hover{border-color:var(--primary);}
   .cal-day-cell.other-month{opacity:0.4;}
   .cal-day-cell.today{border-color:var(--primary);}
   .cal-day-cell.selected{background:var(--surface-alt);border-color:var(--primary-deep);}
   .cal-day-num{font-weight:700;color:var(--ink);margin-bottom:3px;}
-  .cal-day-events{display:flex;flex-direction:column;gap:2px;}
-  .cal-chip{border-radius:4px;padding:1px 4px;font-size:9.5px;color:#fff;background:var(--busy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .cal-day-events{display:flex;flex-direction:column;gap:2px;min-width:0;}
+  .cal-chip{border-radius:4px;padding:1px 4px;font-size:9px;color:#fff;background:var(--busy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;box-sizing:border-box;}
   .cal-chip.other{background:var(--other);}
-  .cal-week-grid{display:flex;flex-direction:column;gap:6px;}
+  .cal-week-grid{display:flex;flex-direction:column;gap:6px;min-width:340px;}
   .cal-week-row{
-    display:grid;grid-template-columns:80px 1fr;align-items:center;gap:10px;
-    padding:8px;border-radius:8px;cursor:pointer;border:1px solid transparent;
+    display:grid;grid-template-columns:64px 1fr;align-items:center;gap:8px;
+    padding:8px;border-radius:8px;border:1px solid transparent;min-width:0;box-sizing:border-box;
   }
   .cal-week-row:hover{border-color:var(--primary);}
   .cal-week-row.selected{background:var(--bg);border-color:var(--primary-deep);}
-  .cal-week-label{font-size:12px;color:var(--ink-soft);font-weight:600;}
+  .cal-week-label{font-size:11px;color:var(--ink-soft);font-weight:600;cursor:pointer;}
   .day-editor{background:var(--bg);border-radius:12px;padding:16px 18px;margin-top:14px;}
   .day-editor-title{font-size:13.5px;font-weight:700;color:var(--primary-deep);margin:0 0 10px;}
   .day-editor-list{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
@@ -341,6 +354,13 @@
   }
   ::-webkit-scrollbar{width:6px;}
   ::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px;}
+
+  @media (max-width:600px){
+    .wrap{padding:20px 12px 60px;}
+    section{padding:18px 14px;}
+    .cal-day-cell{min-height:48px;padding:4px;font-size:9.5px;}
+    .cal-chip{font-size:8.5px;}
+  }
 </style>
 </head>
 <body>
@@ -351,67 +371,74 @@
       <p class="eyebrow">FUNDAMENTAL IT ENGINEER EXAM</p>
       <h1>FEトラッカー</h1>
     </div>
-    <div class="countdown-box">
-      <label>試験日</label>
-      <input type="date" id="examDateInput">
-      <div class="countdown-num" id="countdownNum">— <span>日</span></div>
-      <div class="plan-total" id="planTotal"></div>
+    <div class="header-right">
+      <button class="btn secondary" id="openSettingsBtn">⚙ 可処分時間の設定</button>
+      <div class="countdown-box">
+        <label>試験日</label>
+        <input type="date" id="examDateInput">
+        <div class="countdown-num" id="countdownNum">— <span>日</span></div>
+        <div class="plan-total" id="planTotal"></div>
+      </div>
     </div>
   </header>
 
-  <section>
-    <h2>可処分時間の設定 <span class="num">01</span></h2>
-    <p class="section-desc">アルバイト・その他の予定・移動時間・睡眠時間を設定します。ここでの設定が「週間可処分時間」に反映されます。</p>
+  <div id="settingsView" style="display:none;">
+    <section>
+      <button class="btn secondary" id="backToDashboardBtn">← ダッシュボードに戻る</button>
+      <h2 style="margin-top:14px;">可処分時間の設定</h2>
+      <p class="section-desc">アルバイト・その他の予定・移動時間・睡眠時間を設定します。ここでの設定が「週間可処分時間」に反映されます。</p>
 
-    <div class="setting-block">
-      <h3 class="setting-title">睡眠時間</h3>
-      <div class="sleep-row">
-        <label for="sleepHoursInput">睡眠時間(1日あたり)</label>
-        <input type="number" id="sleepHoursInput" min="0" max="12" step="0.5" value="7">
-        <span>時間</span>
-      </div>
-    </div>
-
-    <div class="setting-block">
-      <h3 class="setting-title">移動時間(勤務先ごと)</h3>
-      <p class="setting-note">アルバイトの勤務先ごとに、片道の移動時間を設定できます。出勤前・退勤後にそれぞれ加算されます。</p>
-      <div class="commute-list" id="commuteList"></div>
-    </div>
-
-    <div class="setting-block">
-      <h3 class="setting-title">シフトボードから一括取込み</h3>
-      <p class="setting-note">シフトボードの通知テキストをそのまま貼り付けてください。</p>
-      <textarea id="shiftInput" placeholder="07/02（木）08:00 - 10:00&#10;- リピラティス池袋店&#10;..."></textarea>
-      <div class="import-row">
-        <select id="yearSelect"></select>
-        <button class="btn" id="parseBtn">予定を取り込む</button>
-        <button class="btn secondary" id="clearShiftsBtn">取込み済みシフトを全て削除</button>
-        <span class="import-msg" id="importMsg"></span>
-      </div>
-    </div>
-
-    <div class="setting-block">
-      <h3 class="setting-title">カレンダーで確認・編集</h3>
-      <p class="setting-note">日付をクリックすると、その日のシフト・その他の予定を追加・編集・削除できます。</p>
-      <div class="cal-toolbar">
-        <div class="seg-toggle">
-          <button class="seg-btn" data-cal="month">月表示</button>
-          <button class="seg-btn" data-cal="week">週表示</button>
-        </div>
-        <div class="cal-nav">
-          <button class="btn secondary" id="calPrevBtn">‹ 前</button>
-          <span class="cal-range-label" id="calRangeLabel"></span>
-          <button class="btn secondary" id="calNextBtn">次 ›</button>
-          <button class="btn secondary" id="calTodayBtn">今日</button>
+      <div class="setting-block">
+        <h3 class="setting-title">睡眠時間</h3>
+        <div class="sleep-row">
+          <label for="sleepHoursInput">睡眠時間(1日あたり)</label>
+          <input type="number" id="sleepHoursInput" min="0" max="12" step="0.5" value="7">
+          <span>時間</span>
         </div>
       </div>
-      <div id="calendarWrap"></div>
-      <div id="dayEditorWrap"></div>
-    </div>
-  </section>
 
+      <div class="setting-block">
+        <h3 class="setting-title">移動時間(勤務先ごと)</h3>
+        <p class="setting-note">アルバイトの勤務先ごとに、往路・復路それぞれの移動時間を設定できます。</p>
+        <div class="commute-list" id="commuteList"></div>
+      </div>
+
+      <div class="setting-block">
+        <h3 class="setting-title">シフトボードから一括取込み</h3>
+        <p class="setting-note">シフトボードの通知テキストをそのまま貼り付けてください。</p>
+        <textarea id="shiftInput" placeholder="07/02（木）08:00 - 10:00&#10;- リピラティス池袋店&#10;..."></textarea>
+        <div class="import-row">
+          <select id="yearSelect"></select>
+          <button class="btn" id="parseBtn">予定を取り込む</button>
+          <button class="btn secondary" id="clearShiftsBtn">取込み済みシフトを全て削除</button>
+          <span class="import-msg" id="importMsg"></span>
+        </div>
+      </div>
+
+      <div class="setting-block">
+        <h3 class="setting-title">カレンダーで確認・編集</h3>
+        <p class="setting-note">日付をクリックすると、その日のシフト・その他の予定を追加・編集・削除できます。週表示では、バーをダブルクリックしてそのままドラッグすると、時間帯を選んで予定を追加できます。</p>
+        <div class="cal-toolbar">
+          <div class="seg-toggle">
+            <button class="seg-btn" data-cal="month">月表示</button>
+            <button class="seg-btn" data-cal="week">週表示</button>
+          </div>
+          <div class="cal-nav">
+            <button class="btn secondary" id="calPrevBtn">‹ 前</button>
+            <span class="cal-range-label" id="calRangeLabel"></span>
+            <button class="btn secondary" id="calNextBtn">次 ›</button>
+            <button class="btn secondary" id="calTodayBtn">今日</button>
+          </div>
+        </div>
+        <div class="cal-scroll"><div id="calendarWrap"></div></div>
+        <div id="dayEditorWrap"></div>
+      </div>
+    </section>
+  </div>
+
+  <div id="dashboardView">
   <section>
-    <h2>週間可処分時間 <span class="num">02</span></h2>
+    <h2>週間可処分時間 <span class="num">01</span></h2>
     <p class="section-desc">1日のうち6:00〜24:00の範囲で、アルバイト・移動時間・その他の予定・睡眠時間を除いた時間が勉強に使える時間です。設定は「可処分時間の設定」で行います。</p>
     <div class="period-row">
       <label class="period-check"><input type="checkbox" id="timelinePeriodAllChk" checked>全期間</label>
@@ -431,7 +458,7 @@
   </section>
 
   <section>
-    <h2>過去問道場 CSV分析 <span class="num">03</span></h2>
+    <h2>過去問道場 CSV分析 <span class="num">02</span></h2>
     <p class="section-desc">過去問道場からダウンロードした、その日に解いた分のCSVを取り込むと、手入力なしで得意・苦手分野や成績推移を確認できます。</p>
     <div class="csv-row">
       <input type="file" id="csvInput" accept=".csv" multiple>
@@ -466,7 +493,7 @@
   </section>
 
   <section>
-    <h2>学習ログ <span class="num">04</span></h2>
+    <h2>学習ログ <span class="num">03</span></h2>
     <p class="section-desc">勉強した日・時間・内容を記録します。過去問道場のCSVを取り込むと、その日の学習問題数が自動で記録されます(時間・内容は任意入力です)。</p>
     <div class="log-form">
       <input type="date" id="logDate">
@@ -483,7 +510,7 @@
   </section>
 
   <section>
-    <h2>クラウド同期 <span class="num">05</span></h2>
+    <h2>クラウド同期 <span class="num">04</span></h2>
     <p class="section-desc">Googleアカウントでログインすると、Google Driveの専用領域(あなた以外は見えません)にデータが保存され、同じGoogleアカウントでログインした別の端末からも同じ内容を見られます。初回のみ、ご自身のGoogle Cloud ConsoleでOAuthクライアントIDを取得し、下の欄に入力してください。</p>
     <div class="sync-row">
       <input type="text" id="googleClientIdInput" placeholder="Google OAuthクライアントID (例: xxxxx.apps.googleusercontent.com)">
@@ -495,6 +522,7 @@
       <span class="import-msg" id="syncStatusMsg"></span>
     </div>
   </section>
+  </div>
 
   <p class="footer-note">データはこの端末に保存されます。Googleアカウントでログインすると、そのアカウントを通じてのみ他の端末とも共有されます。</p>
 </div>
@@ -508,7 +536,7 @@
     examDate: '',
     shifts: [],       // {date:'YYYY-MM-DD', start:'HH:MM', end:'HH:MM', place:''}
     otherEvents: [],  // {id, date:'YYYY-MM-DD', start:'HH:MM', end:'HH:MM', label:''} アルバイト以外の予定
-    commuteMinutesByPlace: {}, // { 勤務先名: 片道の移動時間(分) } 出勤前・退勤後にそれぞれ加算
+    commuteMinutesByPlace: {}, // { 勤務先名: { to: 出勤時の移動時間(分), from: 退勤時の移動時間(分) } }
     sleepHours: 7,     // 1日あたりの睡眠時間(h)。週間可処分時間の計算から差し引く
     logs: [],         // {id, date, hours, topic}
     kakomonRecords: [], // {url,date,field,major,minor,correct,label} from 過去問道場CSV
@@ -659,7 +687,15 @@
     renderTimeline();
   });
 
-  // ---------- 移動時間(勤務先ごと) ----------
+  // ---------- 移動時間(勤務先ごと、往路・復路別) ----------
+  // 旧形式(数値1つ)のデータが残っていた場合は、往路・復路の両方に同じ値を適用して読み替える
+  function getCommuteEntry(place){
+    const raw = (state.commuteMinutesByPlace || {})[place];
+    if(raw == null) return { to: 0, from: 0 };
+    if(typeof raw === 'number') return { to: raw, from: raw };
+    return { to: raw.to || 0, from: raw.from || 0 };
+  }
+
   function renderCommuteList(){
     const wrap = document.getElementById('commuteList');
     const places = [...new Set(state.shifts.map(s => s.place).filter(Boolean))];
@@ -670,24 +706,28 @@
       return;
     }
     wrap.innerHTML = places.map(place => {
-      const v = (state.commuteMinutesByPlace && state.commuteMinutesByPlace[place] != null) ? state.commuteMinutesByPlace[place] : '';
+      const entry = getCommuteEntry(place);
       return `
         <div class="commute-row">
           <span class="place-name">${escapeHtml(place)}</span>
-          <input type="number" class="commute-input" data-place="${escapeHtml(place)}" min="0" step="5" placeholder="0" value="${v}">
-          <span>分(片道)</span>
+          <span class="commute-field">往路<input type="number" class="commute-input" data-place="${escapeHtml(place)}" data-dir="to" min="0" step="5" placeholder="0" value="${entry.to || ''}">分</span>
+          <span class="commute-field">復路<input type="number" class="commute-input" data-place="${escapeHtml(place)}" data-dir="from" min="0" step="5" placeholder="0" value="${entry.from || ''}">分</span>
         </div>
       `;
     }).join('');
     wrap.querySelectorAll('.commute-input').forEach(input => {
       input.addEventListener('change', (e) => {
         const place = e.target.dataset.place;
+        const dir = e.target.dataset.dir;
         let v = parseFloat(e.target.value);
         if(isNaN(v) || v < 0) v = 0;
         if(!state.commuteMinutesByPlace) state.commuteMinutesByPlace = {};
-        state.commuteMinutesByPlace[place] = v;
+        const entry = getCommuteEntry(place);
+        entry[dir] = v;
+        state.commuteMinutesByPlace[place] = entry;
         saveState();
         renderTimeline();
+        renderCalendar();
       });
     });
   }
@@ -805,7 +845,6 @@
     state.shifts.forEach(s => { (shiftsByDate[s.date] = shiftsByDate[s.date] || []).push(s); });
     const eventsByDate = {};
     (state.otherEvents || []).forEach(e => { (eventsByDate[e.date] = eventsByDate[e.date] || []).push(e); });
-    const commuteMap = state.commuteMinutesByPlace || {};
     const sleepHours = typeof state.sleepHours === 'number' ? state.sleepHours : 7;
 
     dates.forEach(date => {
@@ -821,12 +860,14 @@
       dayShifts.forEach(s => {
         const [ss, se] = clip(toMin(s.start), toMin(s.end));
         if(se > ss) shiftSegs.push({ start: ss, end: se, title: `${s.place} ${s.start}-${s.end}` });
-        const commute = commuteMap[s.place] || 0;
-        if(commute > 0){
-          const [cs1, ce1] = clip(toMin(s.start) - commute, toMin(s.start));
-          if(ce1 > cs1) commuteSegs.push({ start: cs1, end: ce1, title: `${s.place} 移動(往路) ${commute}分` });
-          const [cs2, ce2] = clip(toMin(s.end), toMin(s.end) + commute);
-          if(ce2 > cs2) commuteSegs.push({ start: cs2, end: ce2, title: `${s.place} 移動(復路) ${commute}分` });
+        const commute = getCommuteEntry(s.place);
+        if(commute.to > 0){
+          const [cs1, ce1] = clip(toMin(s.start) - commute.to, toMin(s.start));
+          if(ce1 > cs1) commuteSegs.push({ start: cs1, end: ce1, title: `${s.place} 移動(往路) ${commute.to}分` });
+        }
+        if(commute.from > 0){
+          const [cs2, ce2] = clip(toMin(s.end), toMin(s.end) + commute.from);
+          if(ce2 > cs2) commuteSegs.push({ start: cs2, end: ce2, title: `${s.place} 移動(復路) ${commute.from}分` });
         }
       });
       dayEvents.forEach(ev => {
@@ -907,6 +948,18 @@
     renderCalendar();
   });
 
+  // ---------- 設定ページの表示切替 ----------
+  document.getElementById('openSettingsBtn').addEventListener('click', () => {
+    document.getElementById('dashboardView').style.display = 'none';
+    document.getElementById('settingsView').style.display = 'block';
+    window.scrollTo(0, 0);
+  });
+  document.getElementById('backToDashboardBtn').addEventListener('click', () => {
+    document.getElementById('settingsView').style.display = 'none';
+    document.getElementById('dashboardView').style.display = 'block';
+    window.scrollTo(0, 0);
+  });
+
   function updateCalToggleActive(){
     document.querySelectorAll('.seg-btn[data-cal]').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.cal === (state.calendarView || 'month'));
@@ -971,6 +1024,59 @@
     });
   }
 
+  // 分(0-1440)をHH:MM形式に変換。<input type=time>の上限に合わせ24:00は23:59に丸める
+  function minToHHMM(min){
+    min = Math.max(0, Math.min(WINDOW_END, Math.round(min / 5) * 5));
+    if(min >= 1440) min = 1439;
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  }
+
+  function pxToMinutes(track, clientX){
+    const rect = track.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+    let min = WINDOW_START + ratio * WINDOW_LEN;
+    min = Math.round(min / 15) * 15; // 15分単位にスナップ
+    return Math.min(WINDOW_END, Math.max(WINDOW_START, min));
+  }
+
+  // 週表示のバーをダブルクリックしてそのままドラッグすると、時間帯を選んで予定追加フォームに反映する
+  function attachWeekTrackDrag(trackEl, dateStr){
+    trackEl.addEventListener('dblclick', (e) => {
+      e.preventDefault();
+      const startMin = pxToMinutes(trackEl, e.clientX);
+      const overlay = document.createElement('div');
+      overlay.className = 'seg selecting';
+      trackEl.appendChild(overlay);
+
+      const updateOverlay = (curMin) => {
+        const lo = Math.min(startMin, curMin), hi = Math.max(startMin, curMin);
+        overlay.style.left = ((lo - WINDOW_START) / WINDOW_LEN * 100) + '%';
+        overlay.style.width = (Math.max(hi - lo, 5) / WINDOW_LEN * 100) + '%';
+      };
+      updateOverlay(startMin);
+
+      const onMove = (ev) => { updateOverlay(pxToMinutes(trackEl, ev.clientX)); };
+      const onUp = (ev) => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        const endMin = pxToMinutes(trackEl, ev.clientX);
+        overlay.remove();
+        let lo = Math.min(startMin, endMin), hi = Math.max(startMin, endMin);
+        if(hi - lo < 15) hi = lo + 15;
+        hi = Math.min(WINDOW_END, hi);
+        selectedEditorDate = dateStr;
+        renderCalendar();
+        renderDayEditor({ start: minToHHMM(lo), end: minToHHMM(hi) });
+        const editorEl = document.getElementById('dayEditorWrap');
+        if(editorEl) editorEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+  }
+
   function renderCalendarWeek(){
     const wrap = document.getElementById('calendarWrap');
     const label = document.getElementById('calRangeLabel');
@@ -985,43 +1091,55 @@
       const dateStr = fmtDate(d);
       const wd = WEEKDAYS[d.getDay()];
       const { shifts, others } = eventsSummaryForDate(dateStr);
-      const segsHtml = [
-        ...shifts.map(s => {
-          const ss = Math.max(toMin(s.start), WINDOW_START), se = Math.min(toMin(s.end), WINDOW_END);
-          if(se <= ss) return '';
-          return `<div class="seg" style="left:${((ss-WINDOW_START)/WINDOW_LEN*100)}%;width:${((se-ss)/WINDOW_LEN*100)}%;" title="${escapeHtml(s.place)} ${s.start}-${s.end}"></div>`;
-        }),
-        ...others.map(e => {
-          const es = Math.max(toMin(e.start), WINDOW_START), ee = Math.min(toMin(e.end), WINDOW_END);
-          if(ee <= es) return '';
-          return `<div class="seg other" style="left:${((es-WINDOW_START)/WINDOW_LEN*100)}%;width:${((ee-es)/WINDOW_LEN*100)}%;" title="${escapeHtml(e.label||'その他')} ${e.start}-${e.end}"></div>`;
-        })
-      ].join('');
+      const clip = (s,e) => [Math.max(s, WINDOW_START), Math.min(e, WINDOW_END)];
+      const segsHtml = [];
+      shifts.forEach(s => {
+        const [ss, se] = clip(toMin(s.start), toMin(s.end));
+        if(se > ss) segsHtml.push(`<div class="seg" style="left:${((ss-WINDOW_START)/WINDOW_LEN*100)}%;width:${((se-ss)/WINDOW_LEN*100)}%;" title="${escapeHtml(s.place)} ${s.start}-${s.end}"></div>`);
+        const commute = getCommuteEntry(s.place);
+        if(commute.to > 0){
+          const [cs1, ce1] = clip(toMin(s.start) - commute.to, toMin(s.start));
+          if(ce1 > cs1) segsHtml.push(`<div class="seg commute" style="left:${((cs1-WINDOW_START)/WINDOW_LEN*100)}%;width:${((ce1-cs1)/WINDOW_LEN*100)}%;" title="移動(往路) ${commute.to}分"></div>`);
+        }
+        if(commute.from > 0){
+          const [cs2, ce2] = clip(toMin(s.end), toMin(s.end) + commute.from);
+          if(ce2 > cs2) segsHtml.push(`<div class="seg commute" style="left:${((cs2-WINDOW_START)/WINDOW_LEN*100)}%;width:${((ce2-cs2)/WINDOW_LEN*100)}%;" title="移動(復路) ${commute.from}分"></div>`);
+        }
+      });
+      others.forEach(e => {
+        const [es, ee] = clip(toMin(e.start), toMin(e.end));
+        if(ee > es) segsHtml.push(`<div class="seg other" style="left:${((es-WINDOW_START)/WINDOW_LEN*100)}%;width:${((ee-es)/WINDOW_LEN*100)}%;" title="${escapeHtml(e.label||'その他')} ${e.start}-${e.end}"></div>`);
+      });
       const classes = ['cal-week-row'];
       if(dateStr === selectedEditorDate) classes.push('selected');
       rowsHtml += `
         <div class="${classes.join(' ')}" data-date="${dateStr}">
-          <div class="cal-week-label">${dateStr.slice(5).replace('-','/')}${dateStr===todayStr ? '(今日)' : `(${wd})`}</div>
-          <div class="track">${segsHtml}</div>
+          <div class="cal-week-label" data-date="${dateStr}">${dateStr.slice(5).replace('-','/')}${dateStr===todayStr ? '(今日)' : `(${wd})`}</div>
+          <div class="track draggable" data-date="${dateStr}">${segsHtml.join('')}</div>
         </div>
       `;
     }
     wrap.innerHTML = `<div class="cal-week-grid">${rowsHtml}</div>`;
-    wrap.querySelectorAll('.cal-week-row').forEach(row => {
-      row.addEventListener('click', () => {
-        selectedEditorDate = row.dataset.date;
+    wrap.querySelectorAll('.cal-week-label').forEach(label2 => {
+      label2.addEventListener('click', () => {
+        selectedEditorDate = label2.dataset.date;
         renderCalendar();
         renderDayEditor();
       });
     });
+    wrap.querySelectorAll('.track.draggable').forEach(track => {
+      attachWeekTrackDrag(track, track.dataset.date);
+    });
   }
 
-  function renderDayEditor(){
+  function renderDayEditor(prefill){
     const wrap = document.getElementById('dayEditorWrap');
     const date = selectedEditorDate;
     const d = new Date(date + 'T00:00:00');
     const wd = WEEKDAYS[d.getDay()];
     const { shifts, others } = eventsSummaryForDate(date);
+    const startVal = (prefill && prefill.start) || '09:00';
+    const endVal = (prefill && prefill.end) || '17:00';
 
     const itemsHtml = [
       ...shifts.map(s => `
@@ -1047,9 +1165,9 @@
             <option value="shift">アルバイト</option>
             <option value="other">その他予定</option>
           </select>
-          <input type="time" id="dayEditorStart" value="09:00">
+          <input type="time" id="dayEditorStart" value="${startVal}">
           <span>〜</span>
-          <input type="time" id="dayEditorEnd" value="17:00">
+          <input type="time" id="dayEditorEnd" value="${endVal}">
           <input type="text" id="dayEditorLabel" placeholder="勤務先名 or 内容">
           <button class="btn" id="dayEditorAddBtn">追加</button>
         </div>
