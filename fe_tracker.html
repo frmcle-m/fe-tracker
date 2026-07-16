@@ -263,7 +263,7 @@
   .bd-bar-outer{background:var(--surface-alt);border-radius:5px;height:8px;overflow:hidden;display:flex;}
   .bd-bar-correct{height:100%;background:var(--free);}
   .bd-bar-incorrect{height:100%;background:var(--busy);}
-  .bd-bar-unanswered{height:100%;background:var(--line);}
+  .bd-bar-unanswered{height:100%;background:repeating-linear-gradient(45deg,#8b96a1,#8b96a1 3px,#aab2ba 3px,#aab2ba 6px);}
   .bd-num{color:var(--ink-soft);font-size:11.5px;text-align:right;}
   .tag{font-size:10.5px;padding:3px 8px;border-radius:20px;font-weight:700;text-align:center;}
   .tag.weak{background:#F5E4DE;color:#A85B41;}
@@ -1017,7 +1017,7 @@
       <div class="cio-legend">
         <span><span class="dot" style="background:var(--free)"></span>正解</span>
         <span><span class="dot" style="background:var(--busy)"></span>誤答</span>
-        <span><span class="dot" style="background:var(--line);border:1px solid var(--ink-soft)"></span>未回答</span>
+        <span><span class="dot" style="background:#8b96a1"></span>未回答</span>
       </div>
     `;
 
@@ -1033,13 +1033,15 @@
         }
         const rowTotal = r.correct + r.incorrect + r.unanswered;
         const pct = n => rowTotal > 0 ? (n / rowTotal * 100) : 0;
+        // 件数が少なく%が小さすぎると視認できなくなるため、1件以上あれば最低幅を確保する
+        const segStyle = n => `width:${pct(n)}%;${n > 0 ? 'min-width:4px;' : ''}`;
         return `
           <div class="breakdown-row">
             <span class="bd-name">${escapeHtml(r.name)}</span>
             <div class="bd-bar-outer">
-              <div class="bd-bar-correct" style="width:${pct(r.correct)}%"></div>
-              <div class="bd-bar-incorrect" style="width:${pct(r.incorrect)}%"></div>
-              <div class="bd-bar-unanswered" style="width:${pct(r.unanswered)}%"></div>
+              <div class="bd-bar-correct" style="${segStyle(r.correct)}"></div>
+              <div class="bd-bar-incorrect" style="${segStyle(r.incorrect)}"></div>
+              <div class="bd-bar-unanswered" style="${segStyle(r.unanswered)}"></div>
             </div>
             <span class="bd-num">正${r.correct}/誤${r.incorrect}/未${r.unanswered}</span>
             ${tag}
