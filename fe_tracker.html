@@ -180,7 +180,7 @@
     content:'';
     position:absolute;
     inset:0;
-    background-image:repeating-linear-gradient(to right, rgba(101,114,128,0.22) 0, rgba(101,114,128,0.22) 1px, transparent 1px, transparent calc(100%/18));
+    background-image:repeating-linear-gradient(to right, rgba(101,114,128,0.22) 0, rgba(101,114,128,0.22) 1px, transparent 1px, transparent calc(100% / var(--tick-hours, 16)));
     pointer-events:none;
   }
   .track.draggable{cursor:crosshair;}
@@ -204,8 +204,9 @@
   .legend span{display:inline-flex;align-items:center;gap:6px;}
   .dot{width:10px;height:10px;border-radius:3px;display:inline-block;}
   .empty-note{font-size:13px;color:var(--ink-soft);padding:14px 0;}
-  .sleep-row{display:flex;align-items:center;gap:8px;margin-bottom:14px;font-size:13px;color:var(--ink-soft);}
-  .sleep-row input[type=number]{width:70px;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-family:inherit;font-size:13px;background:var(--bg);color:var(--ink);}
+  .sleep-row{display:flex;align-items:center;gap:8px;margin-bottom:14px;font-size:13px;color:var(--ink-soft);flex-wrap:wrap;}
+  .sleep-row input[type=number], .sleep-row input[type=time]{border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-family:inherit;font-size:13px;background:var(--bg);color:var(--ink);}
+  .sleep-row input[type=number]{width:70px;}
 
   /* 可処分時間の設定 */
   .setting-block{margin-bottom:24px;padding-bottom:22px;border-bottom:1px solid var(--surface-alt);}
@@ -389,11 +390,14 @@
       <p class="section-desc">アルバイト・その他の予定・移動時間・睡眠時間を設定します。ここでの設定が「週間可処分時間」に反映されます。</p>
 
       <div class="setting-block">
-        <h3 class="setting-title">睡眠時間</h3>
+        <h3 class="setting-title">起床・就寝時刻</h3>
+        <p class="setting-note">この範囲外(睡眠時間)は可処分時間の計算に含めません。範囲内は、アルバイト・移動時間・その他の予定のみを差し引きます。</p>
         <div class="sleep-row">
-          <label for="sleepHoursInput">睡眠時間(1日あたり)</label>
-          <input type="number" id="sleepHoursInput" min="0" max="12" step="0.5" value="7">
-          <span>時間</span>
+          <label for="wakeTimeInput">起床時刻</label>
+          <input type="time" id="wakeTimeInput" value="06:00">
+          <span>〜</span>
+          <label for="bedtimeInput">就寝時刻</label>
+          <input type="time" id="bedtimeInput" value="22:00">
         </div>
       </div>
 
@@ -439,7 +443,7 @@
   <div id="dashboardView">
   <section>
     <h2>週間可処分時間 <span class="num">01</span></h2>
-    <p class="section-desc">1日のうち6:00〜24:00の範囲で、アルバイト・移動時間・その他の予定・睡眠時間を除いた時間が勉強に使える時間です。設定は「可処分時間の設定」で行います。</p>
+    <p class="section-desc">起床時刻〜就寝時刻の範囲で、アルバイト・移動時間・その他の予定を除いた時間が勉強に使える時間です。睡眠時間はこの範囲の外として扱われます。設定は「可処分時間の設定」で行います。</p>
     <div class="period-row">
       <label class="period-check"><input type="checkbox" id="timelinePeriodAllChk" checked>全期間</label>
       <div class="period-inputs" id="timelinePeriodInputs" style="display:none;">
@@ -537,7 +541,8 @@
     shifts: [],       // {date:'YYYY-MM-DD', start:'HH:MM', end:'HH:MM', place:''}
     otherEvents: [],  // {id, date:'YYYY-MM-DD', start:'HH:MM', end:'HH:MM', label:''} アルバイト以外の予定
     commuteMinutesByPlace: {}, // { 勤務先名: { to: 出勤時の移動時間(分), from: 退勤時の移動時間(分) } }
-    sleepHours: 7,     // 1日あたりの睡眠時間(h)。週間可処分時間の計算から差し引く
+    wakeTime: '06:00', // 起床時刻。この時刻より前は可処分時間の計算対象外(睡眠時間)
+    bedtime: '22:00',  // 就寝時刻。この時刻より後は可処分時間の計算対象外(睡眠時間)
     logs: [],         // {id, date, hours, topic}
     kakomonRecords: [], // {url,date,field,major,minor,correct,label} from 過去問道場CSV
     trendGranularity: 'field', // 'field' (分野名) or 'major' (大分類)
@@ -657,12 +662,32 @@
     document.getElementById('importMsg').textContent = '削除しました。';
   });
 
-  document.getElementById('sleepHoursInput').addEventListener('change', (e) => {
-    let v = parseFloat(e.target.value);
-    if(isNaN(v) || v < 0) v = 0;
-    state.sleepHours = v;
+  document.getElementById('wakeTimeInput').addEventListener('change', (e) => {
+    if(!e.target.value) return;
+    if(toMin(e.target.value) >= toMin(state.bedtime || '22:00')){
+      alert('起床時刻は就寝時刻より前に設定してください。');
+      e.target.value = state.wakeTime || '06:00';
+      return;
+    }
+    state.wakeTime = e.target.value;
     saveState();
+    updateWindowFromState();
     renderTimeline();
+    renderCalendar();
+  });
+
+  document.getElementById('bedtimeInput').addEventListener('change', (e) => {
+    if(!e.target.value) return;
+    if(toMin(e.target.value) <= toMin(state.wakeTime || '06:00')){
+      alert('就寝時刻は起床時刻より後に設定してください。');
+      e.target.value = state.bedtime || '22:00';
+      return;
+    }
+    state.bedtime = e.target.value;
+    saveState();
+    updateWindowFromState();
+    renderTimeline();
+    renderCalendar();
   });
 
   document.getElementById('timelinePeriodAllChk').addEventListener('change', (e) => {
@@ -758,13 +783,41 @@
   }
 
   // ---------- Timeline ----------
-  const WINDOW_START = 6 * 60;  // 06:00
-  const WINDOW_END = 24 * 60;   // 24:00
-  const WINDOW_LEN = WINDOW_END - WINDOW_START;
+  // 起床時刻〜就寝時刻の範囲(可処分時間の計算対象)。state.wakeTime/state.bedtimeから算出する。
+  let WINDOW_START = 6 * 60;  // 06:00
+  let WINDOW_END = 22 * 60;   // 22:00
+  let WINDOW_LEN = WINDOW_END - WINDOW_START;
 
   function toMin(hhmm){
     const [h,m] = hhmm.split(':').map(Number);
     return h*60+m;
+  }
+
+  function updateWindowFromState(){
+    const wake = toMin(state.wakeTime || '06:00');
+    let bed = toMin(state.bedtime || '22:00');
+    if(bed <= wake) bed = wake + 60; // 不正な保存データへのフォールバック
+    WINDOW_START = wake;
+    WINDOW_END = bed;
+    WINDOW_LEN = WINDOW_END - WINDOW_START;
+  }
+
+  function formatClock(min){
+    min = Math.max(0, Math.round(min));
+    const h = Math.floor(min / 60), m = min % 60;
+    return `${h}:${String(m).padStart(2,'0')}`;
+  }
+
+  // 起床時刻〜就寝時刻を3時間おきに区切ったラベル配列(両端を含む)を返す
+  function rulerLabels(){
+    const points = [WINDOW_START];
+    let t = WINDOW_START + 180;
+    while(t < WINDOW_END - 60){
+      points.push(t);
+      t += 180;
+    }
+    points.push(WINDOW_END);
+    return points.map(formatClock);
   }
 
   function syncTimelinePeriodControls(){
@@ -829,8 +882,11 @@
 
   function renderTimeline(){
     syncTimelinePeriodControls();
-    const sleepInput = document.getElementById('sleepHoursInput');
-    sleepInput.value = (typeof state.sleepHours === 'number' ? state.sleepHours : 7);
+    updateWindowFromState();
+    const wakeInput = document.getElementById('wakeTimeInput');
+    const bedInput = document.getElementById('bedtimeInput');
+    if(wakeInput) wakeInput.value = state.wakeTime || '06:00';
+    if(bedInput) bedInput.value = state.bedtime || '22:00';
     const wrap = document.getElementById('timelineWrap');
     wrap.innerHTML = '';
 
@@ -845,7 +901,8 @@
     state.shifts.forEach(s => { (shiftsByDate[s.date] = shiftsByDate[s.date] || []).push(s); });
     const eventsByDate = {};
     (state.otherEvents || []).forEach(e => { (eventsByDate[e.date] = eventsByDate[e.date] || []).push(e); });
-    const sleepHours = typeof state.sleepHours === 'number' ? state.sleepHours : 7;
+    const rulerHtml = '<span>' + rulerLabels().join('</span><span>') + '</span>';
+    const tickHours = Math.max(1, Math.round(WINDOW_LEN / 60));
 
     dates.forEach(date => {
       const dayShifts = shiftsByDate[date] || [];
@@ -877,7 +934,7 @@
 
       const allIntervals = [...shiftSegs, ...commuteSegs, ...otherSegs].map(s => [s.start, s.end]);
       const busyMin = mergeIntervals(allIntervals);
-      const freeHours = Math.max(0, (WINDOW_LEN - busyMin) / 60 - sleepHours).toFixed(1);
+      const freeHours = Math.max(0, (WINDOW_LEN - busyMin) / 60).toFixed(1);
       const planVal = (state.dailyStudyPlan && state.dailyStudyPlan[date] != null) ? state.dailyStudyPlan[date] : '';
 
       const segToHtml = (s, cls) => {
@@ -894,8 +951,8 @@
       row.innerHTML = `
         <div class="day-label">${mo}/${da}<span class="wd">(${wd})</span></div>
         <div>
-          <div class="track">${segsHtml}</div>
-          <div class="track-ruler"><span>6:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
+          <div class="track" style="--tick-hours:${tickHours}">${segsHtml}</div>
+          <div class="track-ruler">${rulerHtml}</div>
         </div>
         <div class="free-hours">可能<br><b>${freeHours}h</b></div>
         <div class="plan-cell">
@@ -1099,6 +1156,8 @@
     label.textContent = `${fmtDate(weekStart).slice(5)} 〜 ${fmtDate(weekEnd).slice(5)}`;
 
     const todayStr = fmtDate(new Date());
+    const rulerHtml = '<span>' + rulerLabels().join('</span><span>') + '</span>';
+    const tickHours = Math.max(1, Math.round(WINDOW_LEN / 60));
     let rowsHtml = '';
     for(let i = 0; i < 7; i++){
       const d = new Date(weekStart); d.setDate(d.getDate() + i);
@@ -1130,8 +1189,8 @@
         <div class="${classes.join(' ')}" data-date="${dateStr}">
           <div class="cal-week-label" data-date="${dateStr}">${dateStr.slice(5).replace('-','/')}${dateStr===todayStr ? '(今日)' : `(${wd})`}</div>
           <div>
-            <div class="track draggable" data-date="${dateStr}">${segsHtml.join('')}</div>
-            <div class="track-ruler"><span>6:00</span><span>9:00</span><span>12:00</span><span>15:00</span><span>18:00</span><span>21:00</span><span>24:00</span></div>
+            <div class="track draggable" data-date="${dateStr}" style="--tick-hours:${tickHours}">${segsHtml.join('')}</div>
+            <div class="track-ruler">${rulerHtml}</div>
           </div>
         </div>
       `;
@@ -1819,6 +1878,7 @@
   }
 
   function render(){
+    updateWindowFromState();
     syncStudyLogsFromKakomon();
     renderCountdown();
     renderCommuteList();
