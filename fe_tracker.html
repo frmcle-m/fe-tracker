@@ -238,12 +238,12 @@
   .cal-chip.other{background:var(--other);}
   .cal-week-grid{display:flex;flex-direction:column;gap:6px;min-width:340px;}
   .cal-week-row{
-    display:grid;grid-template-columns:64px 1fr;align-items:center;gap:8px;
+    display:grid;grid-template-columns:64px 1fr;align-items:start;gap:8px;
     padding:8px;border-radius:8px;border:1px solid transparent;min-width:0;box-sizing:border-box;
   }
   .cal-week-row:hover{border-color:var(--primary);}
   .cal-week-row.selected{background:var(--bg);border-color:var(--primary-deep);}
-  .cal-week-label{font-size:11px;color:var(--ink-soft);font-weight:600;cursor:pointer;}
+  .cal-week-label{font-size:11px;color:var(--ink-soft);font-weight:600;cursor:pointer;padding-top:2px;}
   .day-editor{background:var(--bg);border-radius:12px;padding:16px 18px;margin-top:14px;}
   .day-editor-title{font-size:13.5px;font-weight:700;color:var(--primary-deep);margin:0 0 10px;}
   .day-editor-list{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
@@ -1129,7 +1129,10 @@
       rowsHtml += `
         <div class="${classes.join(' ')}" data-date="${dateStr}">
           <div class="cal-week-label" data-date="${dateStr}">${dateStr.slice(5).replace('-','/')}${dateStr===todayStr ? '(今日)' : `(${wd})`}</div>
-          <div class="track draggable" data-date="${dateStr}">${segsHtml.join('')}</div>
+          <div>
+            <div class="track draggable" data-date="${dateStr}">${segsHtml.join('')}</div>
+            <div class="track-ruler"><span>6:00</span><span>9:00</span><span>12:00</span><span>15:00</span><span>18:00</span><span>21:00</span><span>24:00</span></div>
+          </div>
         </div>
       `;
     }
