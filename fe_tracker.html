@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FEトラッカー | 基本情報技術者試験</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;800&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F3F5F7;
+    --surface:#FFFFFF;
+    --surface-alt:#E9EEF2;
+    --ink:#33404A;
+    --ink-soft:#657280;
+    --primary:#5C82A8;
+    --primary-deep:#33506A;
+    --free:#8FB9A8;
+    --free-bg:#E4EEE9;
+    --busy:#D8A48F;
+    --line:#D6DFE5;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Noto Sans JP', sans-serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:980px;margin:0 auto;padding:32px 20px 80px;}
+
+  header.top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    flex-wrap:wrap;
+    gap:20px;
+    margin-bottom:28px;
+    padding-bottom:22px;
+    border-bottom:1px solid var(--line);
+  }
+  .eyebrow{
+    font-size:12px;
+    letter-spacing:0.14em;
+    color:var(--primary);
+    font-weight:600;
+    margin:0 0 6px;
+  }
+  h1{
+    font-family:'Shippori Mincho', serif;
+    font-weight:800;
+    font-size:32px;
+    margin:0;
+    color:var(--primary-deep);
+    letter-spacing:0.02em;
+  }
+  .countdown-box{
+    background:var(--surface);
+    border-radius:var(--radius);
+    padding:14px 20px;
+    text-align:right;
+    box-shadow:0 1px 3px rgba(51,64,74,0.08);
+    min-width:220px;
+  }
+  .countdown-box label{
+    display:block;
+    font-size:11px;
+    color:var(--ink-soft);
+    margin-bottom:4px;
+  }
+  .countdown-box input[type=date]{
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:4px 8px;
+    font-family:inherit;
+    font-size:13px;
+    color:var(--ink);
+    margin-bottom:6px;
+  }
+  .countdown-num{
+    font-family:'Shippori Mincho', serif;
+    font-size:30px;
+    font-weight:800;
+    color:var(--primary-deep);
+  }
+  .countdown-num span{font-size:14px;font-weight:500;color:var(--ink-soft);}
+
+  section{
+    background:var(--surface);
+    border-radius:var(--radius);
+    padding:24px 26px;
+    margin-bottom:22px;
+    box-shadow:0 1px 3px rgba(51,64,74,0.06);
+  }
+  section h2{
+    font-family:'Shippori Mincho', serif;
+    font-size:19px;
+    color:var(--primary-deep);
+    margin:0 0 4px;
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+  }
+  section h2 .num{font-size:12px;color:var(--ink-soft);font-family:'Noto Sans JP',sans-serif;font-weight:500;}
+  .section-desc{font-size:13px;color:var(--ink-soft);margin:0 0 16px;}
+
+  textarea{
+    width:100%;
+    min-height:150px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:12px 14px;
+    font-family:'Noto Sans JP',sans-serif;
+    font-size:13px;
+    color:var(--ink);
+    resize:vertical;
+    background:var(--bg);
+  }
+  .import-row{display:flex;gap:12px;align-items:center;margin-top:12px;flex-wrap:wrap;}
+  select, .btn, .icon-btn{
+    font-family:inherit;
+    font-size:13px;
+  }
+  select{
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:8px 10px;
+    background:var(--surface);
+    color:var(--ink);
+  }
+  .btn{
+    background:var(--primary);
+    color:#fff;
+    border:none;
+    border-radius:8px;
+    padding:9px 18px;
+    cursor:pointer;
+    font-weight:600;
+    transition:background 0.15s ease;
+  }
+  .btn:hover{background:var(--primary-deep);}
+  .btn.secondary{
+    background:transparent;
+    color:var(--primary-deep);
+    border:1px solid var(--primary);
+  }
+  .btn.secondary:hover{background:var(--surface-alt);}
+  .import-msg{font-size:12px;color:var(--ink-soft);}
+
+  /* timeline */
+  .timeline-day{
+    display:grid;
+    grid-template-columns:96px 1fr 74px;
+    align-items:center;
+    gap:12px;
+    padding:8px 0;
+    border-bottom:1px solid var(--surface-alt);
+  }
+  .timeline-day:last-child{border-bottom:none;}
+  .day-label{font-size:12.5px;color:var(--ink-soft);font-weight:600;}
+  .day-label .wd{color:var(--primary);margin-left:2px;}
+  .track{
+    position:relative;
+    height:22px;
+    background:var(--free-bg);
+    border-radius:6px;
+    overflow:hidden;
+  }
+  .seg{
+    position:absolute;
+    top:0;bottom:0;
+    background:var(--busy);
+    border-radius:3px;
+  }
+  .track-ruler{display:flex;justify-content:space-between;font-size:9.5px;color:var(--ink-soft);opacity:0.6;margin-top:2px;}
+  .free-hours{font-size:12px;color:var(--ink-soft);text-align:right;}
+  .free-hours b{color:var(--primary-deep);font-size:14px;}
+  .legend{display:flex;gap:16px;font-size:11.5px;color:var(--ink-soft);margin-bottom:12px;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .dot{width:10px;height:10px;border-radius:3px;display:inline-block;}
+  .empty-note{font-size:13px;color:var(--ink-soft);padding:14px 0;}
+
+  /* log */
+  .log-form{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;}
+  .log-form input{
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:8px 10px;
+    font-family:inherit;
+    font-size:13px;
+    background:var(--bg);
+  }
+  .log-form input[type=date]{width:150px;}
+  .log-form input[type=number]{width:80px;}
+  .log-form input[type=text]{flex:1;min-width:160px;}
+  .log-list{display:flex;flex-direction:column;gap:8px;max-height:260px;overflow-y:auto;}
+  .log-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:var(--bg);
+    border-radius:8px;
+    padding:9px 14px;
+    font-size:13px;
+  }
+  .log-item .meta{color:var(--ink-soft);font-size:12px;}
+  .log-item button{
+    background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:16px;line-height:1;
+  }
+  .log-item button:hover{color:#c0574a;}
+  .log-summary{
+    display:flex;gap:24px;margin-top:16px;padding-top:14px;border-top:1px solid var(--surface-alt);
+  }
+  .log-summary div{font-size:12px;color:var(--ink-soft);}
+  .log-summary b{display:block;font-size:20px;color:var(--primary-deep);font-family:'Shippori Mincho',serif;}
+
+  /* checklist */
+  .overall-progress{margin-bottom:20px;}
+  .bar-outer{background:var(--surface-alt);border-radius:6px;height:10px;overflow:hidden;}
+  .bar-inner{background:var(--primary);height:100%;border-radius:6px;transition:width 0.3s ease;}
+  .overall-progress .pct{font-size:12px;color:var(--ink-soft);margin-top:6px;}
+  .group{margin-bottom:18px;}
+  .group:last-child{margin-bottom:0;}
+  .group-head{
+    display:flex;justify-content:space-between;align-items:center;cursor:pointer;
+    padding:8px 0;
+  }
+  .group-head h3{
+    font-size:14.5px;margin:0;color:var(--ink);font-weight:700;
+  }
+  .group-head .g-pct{font-size:12px;color:var(--ink-soft);}
+  .group-bar{background:var(--surface-alt);border-radius:5px;height:6px;overflow:hidden;margin-bottom:8px;}
+  .group-bar-inner{background:var(--free);height:100%;border-radius:5px;}
+  .topics{display:flex;flex-direction:column;gap:6px;padding-left:2px;}
+  .topic{display:flex;align-items:center;gap:10px;font-size:13.5px;padding:4px 0;}
+  .topic input{width:16px;height:16px;accent-color:var(--primary);cursor:pointer;}
+  .topic label{cursor:pointer;flex:1;}
+  .topic.done label{color:var(--ink-soft);text-decoration:line-through;}
+
+  /* kakomon csv analysis */
+  .csv-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:4px;}
+  input[type=file]{font-size:12.5px;font-family:inherit;color:var(--ink-soft);}
+  .day-select-row{display:flex;align-items:center;gap:10px;margin:16px 0 8px;flex-wrap:wrap;}
+  .day-select-row select{border:1px solid var(--line);border-radius:8px;padding:7px 10px;background:var(--surface);font-family:inherit;font-size:13px;}
+  .day-summary{font-size:13.5px;color:var(--primary-deep);margin:0 0 10px;font-weight:700;}
+  .breakdown-row{display:grid;grid-template-columns:160px 1fr 54px 46px;align-items:center;gap:10px;padding:6px 0;font-size:13px;border-bottom:1px solid var(--surface-alt);}
+  .breakdown-row:last-child{border-bottom:none;}
+  .bd-name{color:var(--ink);}
+  .bd-bar-outer{background:var(--surface-alt);border-radius:5px;height:8px;overflow:hidden;}
+  .bd-bar-inner{height:100%;border-radius:5px;}
+  .bd-num{color:var(--ink-soft);font-size:12px;text-align:right;}
+  .tag{font-size:10.5px;padding:3px 8px;border-radius:20px;font-weight:700;text-align:center;}
+  .tag.weak{background:#F5E4DE;color:#A85B41;}
+  .tag.strong{background:#E1EEE7;color:#3F7A5C;}
+  .seg-toggle{display:flex;gap:6px;margin-bottom:10px;}
+  .seg-btn{border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);padding:6px 14px;border-radius:20px;font-size:12px;cursor:pointer;font-family:inherit;}
+  .seg-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+  .chart-box{width:100%;overflow-x:auto;}
+  .chart-box svg{width:100%;height:auto;display:block;}
+  .category-legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:10px;}
+  .legend-chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-soft);}
+  .legend-chip .dot{width:9px;height:9px;border-radius:50%;}
+  .chart-title{font-size:13.5px;font-weight:700;color:var(--ink);margin:20px 0 8px;}
+  .chart-title:first-of-type{margin-top:0;}
+
+  .footer-note{
+    text-align:center;font-size:11.5px;color:var(--ink-soft);margin-top:8px;
+  }
+  ::-webkit-scrollbar{width:6px;}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <p class="eyebrow">FUNDAMENTAL IT ENGINEER EXAM</p>
+      <h1>FEトラッカー</h1>
+    </div>
+    <div class="countdown-box">
+      <label>試験日</label>
+      <input type="date" id="examDateInput">
+      <div class="countdown-num" id="countdownNum">— <span>日</span></div>
+    </div>
+  </header>
+
+  <section>
+    <h2>シフト取込み <span class="num">01</span></h2>
+    <p class="section-desc">シフトボードの通知テキストをそのまま貼り付けてください。バイトの予定を勉強可能時間の計算に反映します。</p>
+    <textarea id="shiftInput" placeholder="07/02（木）08:00 - 10:00&#10;- リピラティス池袋店&#10;..."></textarea>
+    <div class="import-row">
+      <select id="yearSelect"></select>
+      <button class="btn" id="parseBtn">予定を取り込む</button>
+      <button class="btn secondary" id="clearShiftsBtn">取込み済みを全て削除</button>
+      <span class="import-msg" id="importMsg"></span>
+    </div>
+  </section>
+
+  <section>
+    <h2>週間可処分時間 <span class="num">02</span></h2>
+    <p class="section-desc">1日のうち6:00〜24:00の範囲で、バイトの予定(オレンジ)以外が勉強に使える時間です。</p>
+    <div class="legend">
+      <span><span class="dot" style="background:var(--busy)"></span>予定あり</span>
+      <span><span class="dot" style="background:var(--free-bg);border:1px solid var(--line)"></span>勉強可能</span>
+    </div>
+    <div id="timelineWrap"></div>
+  </section>
+
+  <section>
+    <h2>過去問道場 CSV分析 <span class="num">03</span></h2>
+    <p class="section-desc">過去問道場からダウンロードした、その日に解いた分のCSVを取り込むと、手入力なしで得意・苦手分野や成績推移を確認できます。</p>
+    <div class="csv-row">
+      <input type="file" id="csvInput" accept=".csv" multiple>
+      <button class="btn secondary" id="clearCsvBtn">取込み済みを全て削除</button>
+    </div>
+    <p class="import-msg" id="csvImportMsg"></p>
+
+    <div class="day-select-row">
+      <label style="font-size:12.5px;color:var(--ink-soft);">日付を選択</label>
+      <select id="kakomonDateSelect"></select>
+    </div>
+    <p class="day-summary" id="daySummary"></p>
+    <div id="dayBreakdownWrap"></div>
+
+    <p class="chart-title">正答率の推移(全体)</p>
+    <div class="chart-box"><svg id="overallTrendSvg"></svg></div>
+
+    <p class="chart-title">分野別 正答率の推移</p>
+    <div class="seg-toggle">
+      <button class="seg-btn" data-g="field">分野名(3系統)</button>
+      <button class="seg-btn" data-g="major">大分類(詳細)</button>
+    </div>
+    <div class="chart-box"><svg id="categoryTrendSvg"></svg></div>
+    <div class="category-legend" id="categoryLegend"></div>
+  </section>
+
+  <section>
+    <h2>学習ログ <span class="num">04</span></h2>
+    <p class="section-desc">勉強した日・時間・内容を記録します。</p>
+    <div class="log-form">
+      <input type="date" id="logDate">
+      <input type="number" id="logHours" placeholder="時間" step="0.5" min="0">
+      <input type="text" id="logTopic" placeholder="内容(例: 過去問道場 科目B)">
+      <button class="btn" id="addLogBtn">記録する</button>
+    </div>
+    <div class="log-list" id="logList"></div>
+    <div class="log-summary">
+      <div>累計時間<b id="totalHours">0h</b></div>
+      <div>直近7日間<b id="weekHours">0h</b></div>
+      <div>記録日数<b id="logDays">0</b></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>学習チェックリスト <span class="num">05</span></h2>
+    <p class="section-desc">IPA基本情報技術者試験のシラバスに沿った分野別チェックリストです。</p>
+    <div class="overall-progress">
+      <div class="bar-outer"><div class="bar-inner" id="overallBar" style="width:0%"></div></div>
+      <p class="pct" id="overallPct">全体 0% 完了</p>
+    </div>
+    <div id="groupsWrap"></div>
+  </section>
+
+  <p class="footer-note">データはこの端末のこのアプリ内にのみ保存されます。</p>
+</div>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'fe-tracker-state';
+  const WEEKDAYS = ['日','月','火','水','木','金','土'];
+
+  const SYLLABUS = [
+    { id:'tech', name:'テクノロジ系', topics:[
+      '基礎理論(離散数学・情報理論)',
+      'アルゴリズムとデータ構造',
+      'コンピュータ構成要素(プロセッサ/メモリ/入出力)',
+      'システム構成要素',
+      'ソフトウェア(OS等)',
+      'ハードウェア',
+      'ヒューマンインタフェース/マルチメディア',
+      'データベース',
+      'ネットワーク',
+      'セキュリティ',
+      'システム開発技術',
+    ]},
+    { id:'mgmt', name:'マネジメント系', topics:[
+      'ソフトウェア開発管理技術',
+      'プロジェクトマネジメント',
+      'サービスマネジメント',
+      'システム監査',
+    ]},
+    { id:'strategy', name:'ストラテジ系', topics:[
+      'システム戦略',
+      '経営戦略',
+      '企業と法務',
+    ]},
+    { id:'subjectB', name:'科目B(アルゴリズム・セキュリティ)', topics:[
+      '擬似言語の文法・演習',
+      '情報セキュリティ実践問題',
+      '過去問道場 科目B演習',
+    ]},
+  ];
+
+  let state = {
+    examDate: '',
+    shifts: [],       // {date:'YYYY-MM-DD', start:'HH:MM', end:'HH:MM', place:''}
+    logs: [],         // {id, date, hours, topic}
+    checklist: {},     // topicKey: bool
+    kakomonRecords: [], // {url,date,field,major,minor,correct,label} from 過去問道場CSV
+    trendGranularity: 'field' // 'field' (分野名) or 'major' (大分類)
+  };
+
+  async function loadState(){
+    try{
+      const res = await window.storage.get(STORAGE_KEY, false);
+      if(res && res.value){
+        const parsed = JSON.parse(res.value);
+        state = Object.assign(state, parsed);
+      }
+    }catch(e){
+      // no saved state yet
+    }
+    render();
+  }
+
+  async function saveState(){
+    try{
+      await window.storage.set(STORAGE_KEY, JSON.stringify(state), false);
+    }catch(e){
+      console.error('保存に失敗しました', e);
+    }
+  }
+
+  // ---------- Year select ----------
+  function initYearSelect(){
+    const sel = document.getElementById('yearSelect');
+    const thisYear = new Date().getFullYear();
+    for(let y = thisYear - 1; y <= thisYear + 1; y++){
+      const opt = document.createElement('option');
+      opt.value = y; opt.textContent = y + '年';
+      if(y === thisYear) opt.selected = true;
+      sel.appendChild(opt);
+    }
+  }
+
+  // ---------- Parsing ----------
+  function parseShiftText(text, year){
+    const lines = text.split('\n').map(l => l.trim());
+    const dateLineRe = /^(\d{1,2})\/(\d{1,2})（(.)）\s*(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/;
+    const placeLineRe = /^-\s*(.+)/;
+    const found = [];
+    for(let i = 0; i < lines.length; i++){
+      const m = lines[i].match(dateLineRe);
+      if(m){
+        const [, mo, da, wd, sh, sm, eh, em] = m;
+        let place = '';
+        for(let j = i+1; j < lines.length; j++){
+          if(lines[j] === '') continue;
+          const pm = lines[j].match(placeLineRe);
+          if(pm){ place = pm[1].trim(); }
+          break;
+        }
+        const mm = String(mo).padStart(2,'0');
+        const dd = String(da).padStart(2,'0');
+        found.push({
+          date: `${year}-${mm}-${dd}`,
+          start: `${String(sh).padStart(2,'0')}:${sm}`,
+          end: `${String(eh).padStart(2,'0')}:${em}`,
+          place
+        });
+      }
+    }
+    return found;
+  }
+
+  function dedupeKey(s){ return `${s.date}_${s.start}_${s.end}_${s.place}`; }
+
+  document.getElementById('parseBtn').addEventListener('click', () => {
+    const text = document.getElementById('shiftInput').value;
+    const year = document.getElementById('yearSelect').value;
+    const parsed = parseShiftText(text, year);
+    const msg = document.getElementById('importMsg');
+    if(parsed.length === 0){
+      msg.textContent = '予定を読み取れませんでした。フォーマットをご確認ください。';
+      return;
+    }
+    const existingKeys = new Set(state.shifts.map(dedupeKey));
+    let added = 0;
+    parsed.forEach(s => {
+      const k = dedupeKey(s);
+      if(!existingKeys.has(k)){
+        state.shifts.push(s);
+        existingKeys.add(k);
+        added++;
+      }
+    });
+    state.shifts.sort((a,b) => (a.date+a.start).localeCompare(b.date+b.start));
+    msg.textContent = `${parsed.length}件中 ${added}件を新規追加しました。`;
+    document.getElementById('shiftInput').value = '';
+    saveState();
+    renderTimeline();
+  });
+
+  document.getElementById('clearShiftsBtn').addEventListener('click', () => {
+    if(!confirm('取込み済みのシフト予定をすべて削除しますか？')) return;
+    state.shifts = [];
+    saveState();
+    renderTimeline();
+    document.getElementById('importMsg').textContent = '削除しました。';
+  });
+
+  // ---------- Timeline ----------
+  const WINDOW_START = 6 * 60;  // 06:00
+  const WINDOW_END = 24 * 60;   // 24:00
+  const WINDOW_LEN = WINDOW_END - WINDOW_START;
+
+  function toMin(hhmm){
+    const [h,m] = hhmm.split(':').map(Number);
+    return h*60+m;
+  }
+
+  function renderTimeline(){
+    const wrap = document.getElementById('timelineWrap');
+    wrap.innerHTML = '';
+    if(state.shifts.length === 0){
+      wrap.innerHTML = '<p class="empty-note">まだ予定が取り込まれていません。上のフォームからシフトボードのテキストを貼り付けてください。</p>';
+      return;
+    }
+    const byDate = {};
+    state.shifts.forEach(s => {
+      if(!byDate[s.date]) byDate[s.date] = [];
+      byDate[s.date].push(s);
+    });
+    const dates = Object.keys(byDate).sort();
+    dates.forEach(date => {
+      const dayShifts = byDate[date];
+      const d = new Date(date + 'T00:00:00');
+      const wd = WEEKDAYS[d.getDay()];
+      const [y,mo,da] = date.split('-');
+
+      let busyMin = 0;
+      const segsHtml = dayShifts.map(s => {
+        let start = Math.max(toMin(s.start), WINDOW_START);
+        let end = Math.min(toMin(s.end), WINDOW_END);
+        if(end <= start) return '';
+        busyMin += (end - start);
+        const leftPct = ((start - WINDOW_START) / WINDOW_LEN) * 100;
+        const widthPct = ((end - start) / WINDOW_LEN) * 100;
+        return `<div class="seg" style="left:${leftPct}%;width:${widthPct}%;" title="${s.place} ${s.start}-${s.end}"></div>`;
+      }).join('');
+
+      const freeHours = ((WINDOW_LEN - busyMin) / 60).toFixed(1);
+
+      const row = document.createElement('div');
+      row.className = 'timeline-day';
+      row.innerHTML = `
+        <div class="day-label">${mo}/${da}<span class="wd">(${wd})</span></div>
+        <div>
+          <div class="track">${segsHtml}</div>
+          <div class="track-ruler"><span>6:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
+        </div>
+        <div class="free-hours">可能<br><b>${freeHours}h</b></div>
+      `;
+      wrap.appendChild(row);
+    });
+  }
+
+  // ---------- Exam countdown ----------
+  const examInput = document.getElementById('examDateInput');
+  examInput.addEventListener('change', () => {
+    state.examDate = examInput.value;
+    saveState();
+    renderCountdown();
+  });
+
+  function renderCountdown(){
+    examInput.value = state.examDate || '';
+    const el = document.getElementById('countdownNum');
+    if(!state.examDate){
+      el.innerHTML = '— <span>日</span>';
+      return;
+    }
+    const today = new Date(); today.setHours(0,0,0,0);
+    const exam = new Date(state.examDate + 'T00:00:00');
+    const diff = Math.ceil((exam - today) / (1000*60*60*24));
+    if(diff < 0){
+      el.innerHTML = '終了 <span>試験日を過ぎました</span>';
+    } else if(diff === 0){
+      el.innerHTML = '本日 <span>試験日です</span>';
+    } else {
+      el.innerHTML = `${diff} <span>日</span>`;
+    }
+  }
+
+  // ---------- Study log ----------
+  document.getElementById('addLogBtn').addEventListener('click', () => {
+    const date = document.getElementById('logDate').value;
+    const hours = parseFloat(document.getElementById('logHours').value);
+    const topic = document.getElementById('logTopic').value.trim();
+    if(!date || isNaN(hours) || hours <= 0){
+      alert('日付と時間(0より大きい数値)を入力してください。');
+      return;
+    }
+    state.logs.push({ id: Date.now().toString(), date, hours, topic });
+    state.logs.sort((a,b) => b.date.localeCompare(a.date));
+    document.getElementById('logHours').value = '';
+    document.getElementById('logTopic').value = '';
+    saveState();
+    renderLogs();
+  });
+
+  function deleteLog(id){
+    state.logs = state.logs.filter(l => l.id !== id);
+    saveState();
+    renderLogs();
+  }
+
+  function renderLogs(){
+    const list = document.getElementById('logList');
+    list.innerHTML = '';
+    if(state.logs.length === 0){
+      list.innerHTML = '<p class="empty-note">まだ記録がありません。</p>';
+    } else {
+      state.logs.forEach(l => {
+        const item = document.createElement('div');
+        item.className = 'log-item';
+        item.innerHTML = `
+          <span>${l.date} ・ <b>${l.hours}h</b>${l.topic ? ' ・ ' + escapeHtml(l.topic) : ''}</span>
+          <button title="削除" data-id="${l.id}">×</button>
+        `;
+        item.querySelector('button').addEventListener('click', (e) => deleteLog(e.target.dataset.id));
+        list.appendChild(item);
+      });
+    }
+    const total = state.logs.reduce((sum,l) => sum + l.hours, 0);
+    const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate()-7);
+    const weekTotal = state.logs
+      .filter(l => new Date(l.date+'T00:00:00') >= sevenDaysAgo)
+      .reduce((sum,l) => sum + l.hours, 0);
+    const days = new Set(state.logs.map(l => l.date)).size;
+    document.getElementById('totalHours').textContent = total.toFixed(1) + 'h';
+    document.getElementById('weekHours').textContent = weekTotal.toFixed(1) + 'h';
+    document.getElementById('logDays').textContent = days;
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ---------- Kakomon CSV analysis ----------
+  const CAT_PALETTE = ['#5C82A8','#8FB9A8','#D8A48F','#9C89B8','#4E9A9A','#C9A66B','#7A8CA6','#B97A85','#6E9B6E','#8676AE','#A5764F'];
+
+  function parseCSV(text){
+    const rows = [];
+    let i = 0, field = '', row = [], inQuotes = false;
+    const len = text.length;
+    while(i < len){
+      const c = text[i];
+      if(inQuotes){
+        if(c === '"'){
+          if(text[i+1] === '"'){ field += '"'; i += 2; continue; }
+          inQuotes = false; i++; continue;
+        }
+        field += c; i++; continue;
+      } else {
+        if(c === '"'){ inQuotes = true; i++; continue; }
+        if(c === ','){ row.push(field); field = ''; i++; continue; }
+        if(c === '\r'){ i++; continue; }
+        if(c === '\n'){ row.push(field); rows.push(row); row = []; field = ''; i++; continue; }
+        field += c; i++; continue;
+      }
+    }
+    if(field.length > 0 || row.length > 0){ row.push(field); rows.push(row); }
+    return rows;
+  }
+
+  function colIndex(header, name){
+    return header.findIndex(h => (h || '').replace(/\s/g,'').includes(name));
+  }
+
+  async function readFileSmart(file){
+    const buf = await file.arrayBuffer();
+    let text = '';
+    try{
+      text = new TextDecoder('shift-jis', { fatal:false }).decode(buf);
+    }catch(e){
+      text = new TextDecoder('utf-8', { fatal:false }).decode(buf);
+    }
+    if(!text.includes('分野') && !text.includes('学習日')){
+      try{
+        const alt = new TextDecoder('utf-8', { fatal:false }).decode(buf);
+        if(alt.includes('分野') || alt.includes('学習日')) text = alt;
+      }catch(e){ /* keep original */ }
+    }
+    return text;
+  }
+
+  async function handleCsvFiles(fileList){
+    let addedTotal = 0, fileCount = 0;
+    const existingKeys = new Set(state.kakomonRecords.map(r => `${r.url}_${r.date}`));
+    for(const file of fileList){
+      const text = await readFileSmart(file);
+      const rows = parseCSV(text).filter(r => r.length > 1);
+      if(rows.length < 2) continue;
+      const header = rows[0];
+      const idx = {
+        correct: colIndex(header, '正誤'),
+        field: colIndex(header, '分野名'),
+        major: colIndex(header, '大分類'),
+        minor: colIndex(header, '中分類'),
+        source: colIndex(header, '出典'),
+        date: colIndex(header, '学習日'),
+      };
+      if(idx.correct < 0 || idx.date < 0) continue;
+      fileCount++;
+      for(let r = 1; r < rows.length; r++){
+        const row = rows[r];
+        if(!row || row.length < 2) continue;
+        const correctRaw = (row[idx.correct] || '').trim();
+        const correct = correctRaw === '○' ? true : (correctRaw === '×' ? false : null);
+        if(correct === null) continue;
+        const dateRaw = (row[idx.date] || '').trim();
+        const dm = dateRaw.match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+        if(!dm) continue;
+        const date = `${dm[1]}-${String(dm[2]).padStart(2,'0')}-${String(dm[3]).padStart(2,'0')}`;
+        const sourceCell = idx.source >= 0 ? (row[idx.source] || '') : '';
+        const hm = sourceCell.match(/HYPERLINK\("([^"]*)","([^"]*)"\)/);
+        const url = hm ? hm[1] : '';
+        const label = hm ? hm[2] : '';
+        const field = idx.field >= 0 ? (row[idx.field] || '').trim() : '';
+        const major = idx.major >= 0 ? (row[idx.major] || '').trim() : '';
+        const minor = idx.minor >= 0 ? (row[idx.minor] || '').trim() : '';
+        const key = `${url}_${date}`;
+        if(url && existingKeys.has(key)) continue;
+        existingKeys.add(key);
+        state.kakomonRecords.push({ url, date, field, major, minor, correct, label });
+        addedTotal++;
+      }
+    }
+    return { fileCount, addedTotal };
+  }
+
+  document.getElementById('csvInput').addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files);
+    const msg = document.getElementById('csvImportMsg');
+    if(files.length === 0) return;
+    msg.textContent = '取り込み中...';
+    try{
+      const { fileCount, addedTotal } = await handleCsvFiles(files);
+      if(fileCount === 0){
+        msg.textContent = 'CSVの形式を認識できませんでした。過去問道場からダウンロードしたファイルかご確認ください。';
+      } else {
+        msg.textContent = `${fileCount}件のファイルから${addedTotal}件の記録を追加しました。`;
+      }
+    }catch(err){
+      msg.textContent = '取り込み中にエラーが発生しました。';
+    }
+    e.target.value = '';
+    saveState();
+    renderKakomon();
+  });
+
+  document.getElementById('clearCsvBtn').addEventListener('click', () => {
+    if(!confirm('取込み済みの過去問道場の記録をすべて削除しますか？')) return;
+    state.kakomonRecords = [];
+    saveState();
+    document.getElementById('csvImportMsg').textContent = '削除しました。';
+    renderKakomon();
+  });
+
+  function kakomonDates(){
+    return [...new Set(state.kakomonRecords.map(r => r.date))].sort();
+  }
+
+  function renderDaySelect(){
+    const sel = document.getElementById('kakomonDateSelect');
+    const dates = kakomonDates().slice().reverse();
+    const prevVal = sel.value;
+    sel.innerHTML = dates.map(d => `<option value="${d}">${d}</option>`).join('');
+    if(dates.includes(prevVal)) sel.value = prevVal;
+    else if(dates.length) sel.value = dates[0];
+  }
+
+  function renderDayBreakdown(){
+    const sel = document.getElementById('kakomonDateSelect');
+    const wrap = document.getElementById('dayBreakdownWrap');
+    const summaryEl = document.getElementById('daySummary');
+    if(state.kakomonRecords.length === 0){
+      wrap.innerHTML = '<p class="empty-note">まだ過去問道場のCSVが取り込まれていません。</p>';
+      summaryEl.textContent = '';
+      return;
+    }
+    const date = sel.value;
+    const dayRecords = state.kakomonRecords.filter(r => r.date === date);
+    if(dayRecords.length === 0){
+      wrap.innerHTML = '<p class="empty-note">この日の記録がありません。</p>';
+      summaryEl.textContent = '';
+      return;
+    }
+    const total = dayRecords.length;
+    const correctN = dayRecords.filter(r => r.correct).length;
+    summaryEl.textContent = `${date}の学習: ${total}問中 ${correctN}問正解(正答率 ${Math.round(correctN/total*100)}%)`;
+
+    const byMinor = {};
+    dayRecords.forEach(r => {
+      const k = r.minor || r.major || r.field || '分類なし';
+      if(!byMinor[k]) byMinor[k] = { correct:0, total:0 };
+      byMinor[k].total++;
+      if(r.correct) byMinor[k].correct++;
+    });
+    const rows = Object.entries(byMinor).map(([name, v]) => ({ name, rate: v.correct/v.total, correct: v.correct, total: v.total }));
+    rows.sort((a,b) => a.rate - b.rate);
+
+    wrap.innerHTML = rows.map(r => {
+      let tag = '';
+      let barColor = 'var(--primary)';
+      if(r.rate < 0.6){ tag = '<span class="tag weak">苦手</span>'; barColor = 'var(--busy)'; }
+      else if(r.rate >= 0.8){ tag = '<span class="tag strong">得意</span>'; barColor = 'var(--free)'; }
+      return `
+        <div class="breakdown-row">
+          <span class="bd-name">${escapeHtml(r.name)}</span>
+          <div class="bd-bar-outer"><div class="bd-bar-inner" style="width:${Math.round(r.rate*100)}%;background:${barColor}"></div></div>
+          <span class="bd-num">${r.correct}/${r.total}</span>
+          ${tag}
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderOverallTrend(){
+    const svg = document.getElementById('overallTrendSvg');
+    const dates = kakomonDates();
+    if(dates.length === 0){ svg.innerHTML = ''; return; }
+    const W = 640, H = 180, padL = 34, padR = 16, padT = 14, padB = 24;
+    const innerW = W - padL - padR, innerH = H - padT - padB;
+    const n = dates.length;
+    const points = dates.map(d => {
+      const recs = state.kakomonRecords.filter(r => r.date === d);
+      return { rate: recs.filter(r => r.correct).length / recs.length * 100, n: recs.length };
+    });
+    const x = i => padL + (n > 1 ? i * (innerW / (n - 1)) : innerW / 2);
+    const y = rate => padT + innerH - (rate / 100 * innerH);
+
+    let grid = '';
+    [0,25,50,75,100].forEach(v => {
+      const yy = padT + innerH - (v/100*innerH);
+      grid += `<line x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}" stroke="#E9EEF2" stroke-width="1"/>`;
+      grid += `<text x="${padL-8}" y="${yy+4}" font-size="10" text-anchor="end" fill="#8b96a1">${v}</text>`;
+    });
+    const step = Math.max(1, Math.ceil(n/6));
+    const labels = dates.map((d,i) => (i % step === 0) ? `<text x="${x(i).toFixed(1)}" y="${H-6}" font-size="9" text-anchor="middle" fill="#8b96a1">${d.slice(5)}</text>` : '').join('');
+    const path = points.map((p,i) => `${i===0?'M':'L'} ${x(i).toFixed(1)} ${y(p.rate).toFixed(1)}`).join(' ');
+    const dots = points.map((p,i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(p.rate).toFixed(1)}" r="3.5" fill="#5C82A8"><title>${dates[i]} 正答率${Math.round(p.rate)}%(n=${p.n})</title></circle>`).join('');
+
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.innerHTML = grid + `<path d="${path}" fill="none" stroke="#5C82A8" stroke-width="2"/>` + dots + labels;
+  }
+
+  function updateToggleActive(){
+    document.querySelectorAll('.seg-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.g === state.trendGranularity);
+    });
+  }
+
+  function renderCategoryTrend(){
+    const svg = document.getElementById('categoryTrendSvg');
+    const legendEl = document.getElementById('categoryLegend');
+    const gran = state.trendGranularity || 'field';
+    const dates = kakomonDates();
+    if(dates.length === 0){ svg.innerHTML = ''; legendEl.innerHTML = ''; return; }
+    const catKey = gran === 'field' ? 'field' : 'major';
+    const categories = [...new Set(state.kakomonRecords.map(r => r[catKey]).filter(Boolean))];
+
+    const W = 640, H = 220, padL = 34, padR = 16, padT = 14, padB = 24;
+    const innerW = W - padL - padR, innerH = H - padT - padB;
+    const n = dates.length;
+    const x = i => padL + (n > 1 ? i * (innerW / (n - 1)) : innerW / 2);
+    const y = rate => padT + innerH - (rate / 100 * innerH);
+
+    let grid = '';
+    [0,25,50,75,100].forEach(v => {
+      const yy = padT + innerH - (v/100*innerH);
+      grid += `<line x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}" stroke="#E9EEF2" stroke-width="1"/>`;
+      grid += `<text x="${padL-8}" y="${yy+4}" font-size="10" text-anchor="end" fill="#8b96a1">${v}</text>`;
+    });
+    const step = Math.max(1, Math.ceil(n/6));
+    const labels = dates.map((d,i) => (i % step === 0) ? `<text x="${x(i).toFixed(1)}" y="${H-6}" font-size="9" text-anchor="middle" fill="#8b96a1">${d.slice(5)}</text>` : '').join('');
+
+    let paths = '';
+    let legendHtml = '';
+    categories.forEach((cat, ci) => {
+      const color = CAT_PALETTE[ci % CAT_PALETTE.length];
+      let d = '';
+      let started = false;
+      let anyPoint = false;
+      dates.forEach((date, i) => {
+        const recs = state.kakomonRecords.filter(r => r.date === date && r[catKey] === cat);
+        if(recs.length === 0){ started = false; return; }
+        anyPoint = true;
+        const rate = recs.filter(r => r.correct).length / recs.length * 100;
+        d += (started ? 'L' : 'M') + ` ${x(i).toFixed(1)} ${y(rate).toFixed(1)} `;
+        started = true;
+      });
+      if(anyPoint){
+        paths += `<path d="${d.trim()}" fill="none" stroke="${color}" stroke-width="2" opacity="0.9"/>`;
+        legendHtml += `<span class="legend-chip"><span class="dot" style="background:${color}"></span>${escapeHtml(cat)}</span>`;
+      }
+    });
+
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.innerHTML = grid + paths + labels;
+    legendEl.innerHTML = legendHtml;
+  }
+
+  document.querySelectorAll('.seg-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.trendGranularity = btn.dataset.g;
+      saveState();
+      renderCategoryTrend();
+      updateToggleActive();
+    });
+  });
+
+  document.getElementById('kakomonDateSelect').addEventListener('change', renderDayBreakdown);
+
+  function renderKakomon(){
+    renderDaySelect();
+    renderDayBreakdown();
+    renderOverallTrend();
+    renderCategoryTrend();
+    updateToggleActive();
+  }
+
+  // ---------- Checklist ----------
+  function topicKey(groupId, idx){ return `${groupId}_${idx}`; }
+
+  function renderChecklist(){
+    const wrap = document.getElementById('groupsWrap');
+    wrap.innerHTML = '';
+    let doneTotal = 0, allTotal = 0;
+
+    SYLLABUS.forEach(group => {
+      const groupDiv = document.createElement('div');
+      groupDiv.className = 'group';
+
+      let groupDone = 0;
+      const topicsHtml = group.topics.map((t, idx) => {
+        const key = topicKey(group.id, idx);
+        const checked = !!state.checklist[key];
+        if(checked) groupDone++;
+        allTotal++;
+        if(checked) doneTotal++;
+        return `
+          <div class="topic ${checked ? 'done' : ''}">
+            <input type="checkbox" id="chk_${key}" ${checked ? 'checked' : ''} data-key="${key}">
+            <label for="chk_${key}">${t}</label>
+          </div>
+        `;
+      }).join('');
+
+      const groupPct = Math.round((groupDone / group.topics.length) * 100);
+
+      groupDiv.innerHTML = `
+        <div class="group-head">
+          <h3>${group.name}</h3>
+          <span class="g-pct">${groupDone}/${group.topics.length}</span>
+        </div>
+        <div class="group-bar"><div class="group-bar-inner" style="width:${groupPct}%"></div></div>
+        <div class="topics">${topicsHtml}</div>
+      `;
+      wrap.appendChild(groupDiv);
+    });
+
+    wrap.querySelectorAll('input[type=checkbox]').forEach(cb => {
+      cb.addEventListener('change', (e) => {
+        const key = e.target.dataset.key;
+        state.checklist[key] = e.target.checked;
+        saveState();
+        renderChecklist();
+      });
+    });
+
+    const overallPct = allTotal ? Math.round((doneTotal / allTotal) * 100) : 0;
+    document.getElementById('overallBar').style.width = overallPct + '%';
+    document.getElementById('overallPct').textContent = `全体 ${overallPct}% 完了 (${doneTotal}/${allTotal})`;
+  }
+
+  function render(){
+    renderCountdown();
+    renderTimeline();
+    renderLogs();
+    renderKakomon();
+    renderChecklist();
+  }
+
+  initYearSelect();
+  loadState();
+})();
+</script>
+</body>
+</html>
