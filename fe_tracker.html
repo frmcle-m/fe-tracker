@@ -21,6 +21,7 @@
     --busy:#D8A48F;
     --commute:#C9A66B;
     --other:#9C89B8;
+    --sleep:#8C9BB5;
     --line:#D6DFE5;
     --radius:14px;
   }
@@ -189,9 +190,15 @@
     top:0;bottom:0;
     background:var(--busy);
     border-radius:3px;
+    z-index:1;
   }
   .seg.commute{background:var(--commute);}
   .seg.other{background:var(--other);}
+  .seg.sleep{
+    background:repeating-linear-gradient(135deg, var(--sleep) 0, var(--sleep) 4px, rgba(140,155,181,0.55) 4px, rgba(140,155,181,0.55) 8px);
+    border-radius:0;
+    z-index:0;
+  }
   .seg.selecting{background:var(--primary);opacity:0.55;}
   .track-ruler{display:flex;justify-content:space-between;font-size:9.5px;color:var(--ink-soft);opacity:0.6;margin-top:2px;}
   .free-hours{font-size:12px;color:var(--ink-soft);text-align:right;}
@@ -391,7 +398,7 @@
 
       <div class="setting-block">
         <h3 class="setting-title">起床・就寝時刻</h3>
-        <p class="setting-note">この範囲外(睡眠時間)は可処分時間の計算に含めません。範囲内は、アルバイト・移動時間・その他の予定のみを差し引きます。</p>
+        <p class="setting-note">この範囲外(睡眠時間)は可処分時間の計算に含めません。範囲内は、アルバイト・移動時間・その他の予定のみを差し引きます。睡眠時間は下のカレンダーやダッシュボードの帯グラフに色付きで表示されます。</p>
         <div class="sleep-row">
           <label for="wakeTimeInput">起床時刻</label>
           <input type="time" id="wakeTimeInput" value="06:00">
@@ -443,7 +450,7 @@
   <div id="dashboardView">
   <section>
     <h2>週間可処分時間 <span class="num">01</span></h2>
-    <p class="section-desc">起床時刻〜就寝時刻の範囲で、アルバイト・移動時間・その他の予定を除いた時間が勉強に使える時間です。睡眠時間はこの範囲の外として扱われます。設定は「可処分時間の設定」で行います。</p>
+    <p class="section-desc">起床時刻〜就寝時刻の範囲で、アルバイト・移動時間・その他の予定を除いた時間が勉強に使える時間です。睡眠時間(就寝〜起床)は帯の中で色分け表示され、可処分時間の計算からは除外されます。設定は「可処分時間の設定」で行います。</p>
     <div class="period-row">
       <label class="period-check"><input type="checkbox" id="timelinePeriodAllChk" checked>全期間</label>
       <div class="period-inputs" id="timelinePeriodInputs" style="display:none;">
@@ -456,6 +463,7 @@
       <span><span class="dot" style="background:var(--busy)"></span>アルバイト</span>
       <span><span class="dot" style="background:var(--commute)"></span>移動時間</span>
       <span><span class="dot" style="background:var(--other)"></span>その他予定</span>
+      <span><span class="dot" style="background:var(--sleep)"></span>睡眠</span>
       <span><span class="dot" style="background:var(--free-bg);border:1px solid var(--line)"></span>勉強可能</span>
     </div>
     <div id="timelineWrap"></div>
@@ -783,7 +791,12 @@
   }
 
   // ---------- Timeline ----------
-  // 起床時刻〜就寝時刻の範囲(可処分時間の計算対象)。state.wakeTime/state.bedtimeから算出する。
+  // 時間軸は常に0:00〜24:00の全日を表示する。
+  const DAY_START = 0;
+  const DAY_END = 24 * 60;
+  const DAY_LEN = DAY_END - DAY_START;
+
+  // 起床時刻〜就寝時刻の範囲(可処分時間の計算対象/睡眠時間の判定に使用)。state.wakeTime/state.bedtimeから算出する。
   let WINDOW_START = 6 * 60;  // 06:00
   let WINDOW_END = 22 * 60;   // 22:00
   let WINDOW_LEN = WINDOW_END - WINDOW_START;
@@ -808,16 +821,23 @@
     return `${h}:${String(m).padStart(2,'0')}`;
   }
 
-  // 起床時刻〜就寝時刻を3時間おきに区切ったラベル配列(両端を含む)を返す
+  // 0:00〜24:00を4時間おきに区切ったラベル配列(両端を含む)を返す
   function rulerLabels(){
-    const points = [WINDOW_START];
-    let t = WINDOW_START + 180;
-    while(t < WINDOW_END - 60){
+    const points = [];
+    for(let t = DAY_START; t < DAY_END; t += 240){
       points.push(t);
-      t += 180;
     }
-    points.push(WINDOW_END);
+    points.push(DAY_END);
     return points.map(formatClock);
+  }
+
+  // 就寝時刻〜起床時刻(睡眠時間帯)を、この1日の軸上で表す区間の配列を返す。
+  // 就寝が24:00をまたぐため、「起床前(0:00〜起床)」と「就寝後(就寝〜24:00)」の2区間になる。
+  function sleepSegmentsForDay(){
+    const segs = [];
+    if(WINDOW_START > DAY_START) segs.push({ start: DAY_START, end: WINDOW_START, title: `睡眠 〜${formatClock(WINDOW_START)}` });
+    if(WINDOW_END < DAY_END) segs.push({ start: WINDOW_END, end: DAY_END, title: `睡眠 ${formatClock(WINDOW_END)}〜` });
+    return segs;
   }
 
   function syncTimelinePeriodControls(){
@@ -902,7 +922,8 @@
     const eventsByDate = {};
     (state.otherEvents || []).forEach(e => { (eventsByDate[e.date] = eventsByDate[e.date] || []).push(e); });
     const rulerHtml = '<span>' + rulerLabels().join('</span><span>') + '</span>';
-    const tickHours = Math.max(1, Math.round(WINDOW_LEN / 60));
+    const tickHours = 24;
+    const sleepSegs = sleepSegmentsForDay();
 
     dates.forEach(date => {
       const dayShifts = shiftsByDate[date] || [];
@@ -938,11 +959,12 @@
       const planVal = (state.dailyStudyPlan && state.dailyStudyPlan[date] != null) ? state.dailyStudyPlan[date] : '';
 
       const segToHtml = (s, cls) => {
-        const leftPct = ((s.start - WINDOW_START) / WINDOW_LEN) * 100;
-        const widthPct = ((s.end - s.start) / WINDOW_LEN) * 100;
+        const leftPct = ((s.start - DAY_START) / DAY_LEN) * 100;
+        const widthPct = ((s.end - s.start) / DAY_LEN) * 100;
         return `<div class="seg ${cls}" style="left:${leftPct}%;width:${widthPct}%;" title="${escapeHtml(s.title)}"></div>`;
       };
-      const segsHtml = shiftSegs.map(s => segToHtml(s, '')).join('')
+      const segsHtml = sleepSegs.map(s => segToHtml(s, 'sleep')).join('')
+        + shiftSegs.map(s => segToHtml(s, '')).join('')
         + commuteSegs.map(s => segToHtml(s, 'commute')).join('')
         + otherSegs.map(s => segToHtml(s, 'other')).join('');
 
@@ -1083,7 +1105,7 @@
 
   // 分(0-1440)をHH:MM形式に変換。<input type=time>の上限に合わせ24:00は23:59に丸める
   function minToHHMM(min){
-    min = Math.max(0, Math.min(WINDOW_END, Math.round(min / 5) * 5));
+    min = Math.max(DAY_START, Math.min(DAY_END, Math.round(min / 5) * 5));
     if(min >= 1440) min = 1439;
     const h = Math.floor(min / 60);
     const m = min % 60;
@@ -1093,9 +1115,9 @@
   function pxToMinutes(track, clientX){
     const rect = track.getBoundingClientRect();
     const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
-    let min = WINDOW_START + ratio * WINDOW_LEN;
+    let min = DAY_START + ratio * DAY_LEN;
     min = Math.round(min / 15) * 15; // 15分単位にスナップ
-    return Math.min(WINDOW_END, Math.max(WINDOW_START, min));
+    return Math.min(DAY_END, Math.max(DAY_START, min));
   }
 
   // 週表示のバーをダブルクリックしてそのままドラッグすると、時間帯を選んで予定追加フォームに反映する
@@ -1120,8 +1142,8 @@
 
       const updateOverlay = (curMin) => {
         const lo = Math.min(startMin, curMin), hi = Math.max(startMin, curMin);
-        overlay.style.left = ((lo - WINDOW_START) / WINDOW_LEN * 100) + '%';
-        overlay.style.width = (Math.max(hi - lo, 5) / WINDOW_LEN * 100) + '%';
+        overlay.style.left = ((lo - DAY_START) / DAY_LEN * 100) + '%';
+        overlay.style.width = (Math.max(hi - lo, 5) / DAY_LEN * 100) + '%';
       };
       updateOverlay(startMin);
 
@@ -1133,7 +1155,7 @@
         overlay.remove();
         let lo = Math.min(startMin, endMin), hi = Math.max(startMin, endMin);
         if(hi - lo < 15) hi = lo + 15;
-        hi = Math.min(WINDOW_END, hi);
+        hi = Math.min(DAY_END, hi);
         selectedEditorDate = dateStr;
         renderCalendar();
         renderDayEditor({ start: minToHHMM(lo), end: minToHHMM(hi) });
@@ -1157,7 +1179,9 @@
 
     const todayStr = fmtDate(new Date());
     const rulerHtml = '<span>' + rulerLabels().join('</span><span>') + '</span>';
-    const tickHours = Math.max(1, Math.round(WINDOW_LEN / 60));
+    const tickHours = 24;
+    const sleepSegs = sleepSegmentsForDay();
+    const sleepHtml = sleepSegs.map(s => `<div class="seg sleep" style="left:${((s.start-DAY_START)/DAY_LEN*100)}%;width:${((s.end-s.start)/DAY_LEN*100)}%;" title="${escapeHtml(s.title)}"></div>`).join('');
     let rowsHtml = '';
     for(let i = 0; i < 7; i++){
       const d = new Date(weekStart); d.setDate(d.getDate() + i);
@@ -1165,23 +1189,23 @@
       const wd = WEEKDAYS[d.getDay()];
       const { shifts, others } = eventsSummaryForDate(dateStr);
       const clip = (s,e) => [Math.max(s, WINDOW_START), Math.min(e, WINDOW_END)];
-      const segsHtml = [];
+      const segsHtml = [sleepHtml];
       shifts.forEach(s => {
         const [ss, se] = clip(toMin(s.start), toMin(s.end));
-        if(se > ss) segsHtml.push(`<div class="seg" style="left:${((ss-WINDOW_START)/WINDOW_LEN*100)}%;width:${((se-ss)/WINDOW_LEN*100)}%;" title="${escapeHtml(s.place)} ${s.start}-${s.end}"></div>`);
+        if(se > ss) segsHtml.push(`<div class="seg" style="left:${((ss-DAY_START)/DAY_LEN*100)}%;width:${((se-ss)/DAY_LEN*100)}%;" title="${escapeHtml(s.place)} ${s.start}-${s.end}"></div>`);
         const commute = getCommuteEntry(s.place);
         if(commute.to > 0){
           const [cs1, ce1] = clip(toMin(s.start) - commute.to, toMin(s.start));
-          if(ce1 > cs1) segsHtml.push(`<div class="seg commute" style="left:${((cs1-WINDOW_START)/WINDOW_LEN*100)}%;width:${((ce1-cs1)/WINDOW_LEN*100)}%;" title="移動(往路) ${commute.to}分"></div>`);
+          if(ce1 > cs1) segsHtml.push(`<div class="seg commute" style="left:${((cs1-DAY_START)/DAY_LEN*100)}%;width:${((ce1-cs1)/DAY_LEN*100)}%;" title="移動(往路) ${commute.to}分"></div>`);
         }
         if(commute.from > 0){
           const [cs2, ce2] = clip(toMin(s.end), toMin(s.end) + commute.from);
-          if(ce2 > cs2) segsHtml.push(`<div class="seg commute" style="left:${((cs2-WINDOW_START)/WINDOW_LEN*100)}%;width:${((ce2-cs2)/WINDOW_LEN*100)}%;" title="移動(復路) ${commute.from}分"></div>`);
+          if(ce2 > cs2) segsHtml.push(`<div class="seg commute" style="left:${((cs2-DAY_START)/DAY_LEN*100)}%;width:${((ce2-cs2)/DAY_LEN*100)}%;" title="移動(復路) ${commute.from}分"></div>`);
         }
       });
       others.forEach(e => {
         const [es, ee] = clip(toMin(e.start), toMin(e.end));
-        if(ee > es) segsHtml.push(`<div class="seg other" style="left:${((es-WINDOW_START)/WINDOW_LEN*100)}%;width:${((ee-es)/WINDOW_LEN*100)}%;" title="${escapeHtml(e.label||'その他')} ${e.start}-${e.end}"></div>`);
+        if(ee > es) segsHtml.push(`<div class="seg other" style="left:${((es-DAY_START)/DAY_LEN*100)}%;width:${((ee-es)/DAY_LEN*100)}%;" title="${escapeHtml(e.label||'その他')} ${e.start}-${e.end}"></div>`);
       });
       const classes = ['cal-week-row'];
       if(dateStr === selectedEditorDate) classes.push('selected');
