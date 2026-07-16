@@ -416,9 +416,9 @@
 
   async function loadState(){
     try{
-      const res = await window.storage.get(STORAGE_KEY, false);
-      if(res && res.value){
-        const parsed = JSON.parse(res.value);
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){
+        const parsed = JSON.parse(raw);
         state = Object.assign(state, parsed);
       }
     }catch(e){
@@ -429,7 +429,7 @@
 
   async function saveState(){
     try{
-      await window.storage.set(STORAGE_KEY, JSON.stringify(state), false);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }catch(e){
       console.error('保存に失敗しました', e);
     }
