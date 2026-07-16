@@ -1042,8 +1042,19 @@
   }
 
   // 週表示のバーをダブルクリックしてそのままドラッグすると、時間帯を選んで予定追加フォームに反映する
+  // 「開始地点をダブルクリック→そのままドラッグして終了地点でボタンを離す」を実現するため、
+  // dblclickイベント(ボタンが離れた後に発火する)ではなく、2回目のmousedownを自前で検出して
+  // その場でドラッグを開始する(ボタンが押されたままの状態を維持できる)。
   function attachWeekTrackDrag(trackEl, dateStr){
-    trackEl.addEventListener('dblclick', (e) => {
+    let lastDownTime = 0, lastDownX = 0;
+
+    trackEl.addEventListener('mousedown', (e) => {
+      const now = Date.now();
+      const isSecondClick = (now - lastDownTime < 400) && Math.abs(e.clientX - lastDownX) < 12;
+      lastDownTime = now;
+      lastDownX = e.clientX;
+      if(!isSecondClick) return; // 1回目のmousedownは記録するだけ
+
       e.preventDefault();
       const startMin = pxToMinutes(trackEl, e.clientX);
       const overlay = document.createElement('div');
@@ -1075,6 +1086,9 @@
       document.addEventListener('mousemove', onMove);
       document.addEventListener('mouseup', onUp);
     });
+
+    // ブラウザ標準のdblclickによるテキスト選択などを抑止
+    trackEl.addEventListener('dblclick', (e) => e.preventDefault());
   }
 
   function renderCalendarWeek(){
