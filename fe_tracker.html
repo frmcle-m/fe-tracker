@@ -88,6 +88,8 @@
     color:var(--primary-deep);
   }
   .countdown-num span{font-size:14px;font-weight:500;color:var(--ink-soft);}
+  .plan-total{font-size:11.5px;color:var(--ink-soft);margin-top:6px;}
+  .plan-total b{color:var(--primary-deep);}
 
   section{
     background:var(--surface);
@@ -154,7 +156,7 @@
   /* timeline */
   .timeline-day{
     display:grid;
-    grid-template-columns:96px 1fr 74px;
+    grid-template-columns:96px 1fr 74px 96px;
     align-items:center;
     gap:12px;
     padding:8px 0;
@@ -179,6 +181,10 @@
   .track-ruler{display:flex;justify-content:space-between;font-size:9.5px;color:var(--ink-soft);opacity:0.6;margin-top:2px;}
   .free-hours{font-size:12px;color:var(--ink-soft);text-align:right;}
   .free-hours b{color:var(--primary-deep);font-size:14px;}
+  .plan-cell{font-size:11px;color:var(--ink-soft);text-align:right;}
+  .plan-cell label{display:block;margin-bottom:3px;}
+  .plan-input-row{display:flex;align-items:center;gap:4px;justify-content:flex-end;}
+  .plan-time-input{width:48px;border:1px solid var(--line);border-radius:6px;padding:4px 6px;font-family:inherit;font-size:12px;background:var(--bg);color:var(--ink);text-align:right;}
   .legend{display:flex;gap:16px;font-size:11.5px;color:var(--ink-soft);margin-bottom:12px;}
   .legend span{display:inline-flex;align-items:center;gap:6px;}
   .dot{width:10px;height:10px;border-radius:3px;display:inline-block;}
@@ -302,6 +308,7 @@
       <label>試験日</label>
       <input type="date" id="examDateInput">
       <div class="countdown-num" id="countdownNum">— <span>日</span></div>
+      <div class="plan-total" id="planTotal"></div>
     </div>
   </header>
 
@@ -463,7 +470,8 @@
     kakomonRecords: [], // {url,date,field,major,minor,correct,label} from 過去問道場CSV
     trendGranularity: 'field', // 'field' (分野名) or 'major' (大分類)
     analysisPeriod: { all: true, start: '', end: '' }, // 過去問道場CSV分析の対象期間
-    timelinePeriod: { all: true, start: '', end: '' } // 週間可処分時間の表示期間
+    timelinePeriod: { all: true, start: '', end: '' }, // 週間可処分時間の表示期間
+    dailyStudyPlan: {} // {date: 分} 各日の学習計画時間。未入力の日は30分として扱う
   };
 
   async function loadState(){
@@ -664,6 +672,7 @@
 
       const sleepHours = typeof state.sleepHours === 'number' ? state.sleepHours : 7;
       const freeHours = Math.max(0, (WINDOW_LEN - busyMin) / 60 - sleepHours).toFixed(1);
+      const planVal = (state.dailyStudyPlan && state.dailyStudyPlan[date] != null) ? state.dailyStudyPlan[date] : '';
 
       const row = document.createElement('div');
       row.className = 'timeline-day';
@@ -674,7 +683,28 @@
           <div class="track-ruler"><span>6:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
         </div>
         <div class="free-hours">可能<br><b>${freeHours}h</b></div>
+        <div class="plan-cell">
+          <label>学習計画</label>
+          <div class="plan-input-row">
+            <input type="number" class="plan-time-input" data-date="${date}" min="0" step="5" placeholder="30" value="${planVal}">
+            <span>分</span>
+          </div>
+        </div>
       `;
+      row.querySelector('.plan-time-input').addEventListener('change', (e) => {
+        const d = e.target.dataset.date;
+        const v = e.target.value;
+        if(!state.dailyStudyPlan) state.dailyStudyPlan = {};
+        if(v === ''){
+          delete state.dailyStudyPlan[d];
+        } else {
+          let n = parseFloat(v);
+          if(isNaN(n) || n < 0) n = 0;
+          state.dailyStudyPlan[d] = n;
+        }
+        saveState();
+        renderStudyPlanTotal();
+      });
       wrap.appendChild(row);
     });
   }
@@ -692,6 +722,7 @@
     const el = document.getElementById('countdownNum');
     if(!state.examDate){
       el.innerHTML = '— <span>日</span>';
+      renderStudyPlanTotal();
       return;
     }
     const today = new Date(); today.setHours(0,0,0,0);
@@ -704,6 +735,39 @@
     } else {
       el.innerHTML = `${diff} <span>日</span>`;
     }
+    renderStudyPlanTotal();
+  }
+
+  function fmtDate(d){
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const da = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${da}`;
+  }
+
+  // 今日(開いた日)から試験日までの学習計画時間の合計。未入力の日は1日30分として扱う。
+  function renderStudyPlanTotal(){
+    const el = document.getElementById('planTotal');
+    if(!state.examDate){
+      el.textContent = '';
+      return;
+    }
+    const today = new Date(); today.setHours(0,0,0,0);
+    const exam = new Date(state.examDate + 'T00:00:00');
+    if(exam < today){
+      el.textContent = '';
+      return;
+    }
+    let totalMinutes = 0;
+    const d = new Date(today);
+    while(d <= exam){
+      const dateStr = fmtDate(d);
+      const planned = (state.dailyStudyPlan && state.dailyStudyPlan[dateStr] != null) ? state.dailyStudyPlan[dateStr] : 30;
+      totalMinutes += planned;
+      d.setDate(d.getDate() + 1);
+    }
+    const hours = (totalMinutes / 60).toFixed(1);
+    el.innerHTML = `学習計画時間 合計 <b>${hours}h</b>`;
   }
 
   // ---------- Study log ----------
