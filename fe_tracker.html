@@ -226,28 +226,18 @@
   .log-summary div{font-size:12px;color:var(--ink-soft);}
   .log-summary b{display:block;font-size:20px;color:var(--primary-deep);font-family:'Shippori Mincho',serif;}
 
-  /* checklist */
-  .overall-progress{margin-bottom:20px;}
-  .bar-outer{background:var(--surface-alt);border-radius:6px;height:10px;overflow:hidden;}
-  .bar-inner{background:var(--primary);height:100%;border-radius:6px;transition:width 0.3s ease;}
-  .overall-progress .pct{font-size:12px;color:var(--ink-soft);margin-top:6px;}
-  .group{margin-bottom:18px;}
-  .group:last-child{margin-bottom:0;}
-  .group-head{
-    display:flex;justify-content:space-between;align-items:center;cursor:pointer;
-    padding:8px 0;
-  }
-  .group-head h3{
-    font-size:14.5px;margin:0;color:var(--ink);font-weight:700;
-  }
-  .group-head .g-pct{font-size:12px;color:var(--ink-soft);}
-  .group-bar{background:var(--surface-alt);border-radius:5px;height:6px;overflow:hidden;margin-bottom:8px;}
-  .group-bar-inner{background:var(--free);height:100%;border-radius:5px;}
-  .topics{display:flex;flex-direction:column;gap:6px;padding-left:2px;}
-  .topic{display:flex;align-items:center;gap:10px;font-size:13.5px;padding:4px 0;}
-  .topic input{width:16px;height:16px;accent-color:var(--primary);cursor:pointer;}
-  .topic label{cursor:pointer;flex:1;}
-  .topic.done label{color:var(--ink-soft);text-decoration:line-through;}
+  /* mastery score */
+  .mastery-box{background:var(--bg);border-radius:12px;padding:16px 18px;margin:14px 0 18px;}
+  .mastery-title{font-size:12.5px;color:var(--ink-soft);margin-bottom:6px;}
+  .mastery-pct{font-family:'Shippori Mincho',serif;font-size:34px;font-weight:800;color:var(--primary-deep);}
+  .mastery-pct span{font-size:14px;font-weight:500;color:var(--ink-soft);margin-left:4px;}
+  .mastery-note{font-size:11px;color:var(--ink-soft);margin:4px 0 12px;line-height:1.5;}
+  .mastery-fields{display:flex;gap:18px;flex-wrap:wrap;}
+  .mastery-field{flex:1;min-width:140px;}
+  .mastery-field-name{font-size:12px;color:var(--ink);font-weight:600;margin-bottom:4px;}
+  .mastery-field-bar{background:var(--surface-alt);border-radius:5px;height:7px;overflow:hidden;margin-bottom:4px;}
+  .mastery-field-bar-inner{background:var(--primary);height:100%;border-radius:5px;}
+  .mastery-field-pct{font-size:11px;color:var(--ink-soft);}
 
   /* kakomon csv analysis */
   .csv-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:4px;}
@@ -263,7 +253,7 @@
   .field-group{margin-bottom:18px;}
   .field-group:last-child{margin-bottom:0;}
   .field-group-title{font-size:13.5px;font-weight:700;color:var(--primary-deep);margin:0 0 6px;padding-bottom:4px;border-bottom:1px solid var(--surface-alt);}
-  .breakdown-row{display:grid;grid-template-columns:150px 1fr 130px 46px;align-items:center;gap:10px;padding:6px 0;font-size:13px;border-bottom:1px solid var(--surface-alt);}
+  .breakdown-row{display:grid;grid-template-columns:150px 1fr 165px 46px;align-items:center;gap:10px;padding:6px 0;font-size:13px;border-bottom:1px solid var(--surface-alt);}
   .breakdown-row:last-child{border-bottom:none;}
   .bd-name{color:var(--ink);}
   .bd-bar-outer{background:var(--surface-alt);border-radius:5px;height:8px;overflow:hidden;display:flex;}
@@ -356,6 +346,8 @@
     </div>
     <p class="import-msg" id="csvImportMsg"></p>
 
+    <div class="mastery-box" id="masteryBox"></div>
+
     <div class="period-row">
       <label class="period-check"><input type="checkbox" id="periodAllChk" checked>全期間</label>
       <div class="period-inputs" id="periodInputs" style="display:none;">
@@ -398,17 +390,7 @@
   </section>
 
   <section>
-    <h2>学習チェックリスト <span class="num">05</span></h2>
-    <p class="section-desc">IPA基本情報技術者試験のシラバスに沿った分野別チェックリストです。</p>
-    <div class="overall-progress">
-      <div class="bar-outer"><div class="bar-inner" id="overallBar" style="width:0%"></div></div>
-      <p class="pct" id="overallPct">全体 0% 完了</p>
-    </div>
-    <div id="groupsWrap"></div>
-  </section>
-
-  <section>
-    <h2>クラウド同期 <span class="num">06</span></h2>
+    <h2>クラウド同期 <span class="num">05</span></h2>
     <p class="section-desc">Googleアカウントでログインすると、Google Driveの専用領域(あなた以外は見えません)にデータが保存され、同じGoogleアカウントでログインした別の端末からも同じ内容を見られます。初回のみ、ご自身のGoogle Cloud ConsoleでOAuthクライアントIDを取得し、下の欄に入力してください。</p>
     <div class="sync-row">
       <input type="text" id="googleClientIdInput" placeholder="Google OAuthクライアントID (例: xxxxx.apps.googleusercontent.com)">
@@ -429,44 +411,11 @@
   const STORAGE_KEY = 'fe-tracker-state';
   const WEEKDAYS = ['日','月','火','水','木','金','土'];
 
-  const SYLLABUS = [
-    { id:'tech', name:'テクノロジ系', topics:[
-      '基礎理論(離散数学・情報理論)',
-      'アルゴリズムとデータ構造',
-      'コンピュータ構成要素(プロセッサ/メモリ/入出力)',
-      'システム構成要素',
-      'ソフトウェア(OS等)',
-      'ハードウェア',
-      'ヒューマンインタフェース/マルチメディア',
-      'データベース',
-      'ネットワーク',
-      'セキュリティ',
-      'システム開発技術',
-    ]},
-    { id:'mgmt', name:'マネジメント系', topics:[
-      'ソフトウェア開発管理技術',
-      'プロジェクトマネジメント',
-      'サービスマネジメント',
-      'システム監査',
-    ]},
-    { id:'strategy', name:'ストラテジ系', topics:[
-      'システム戦略',
-      '経営戦略',
-      '企業と法務',
-    ]},
-    { id:'subjectB', name:'科目B(アルゴリズム・セキュリティ)', topics:[
-      '擬似言語の文法・演習',
-      '情報セキュリティ実践問題',
-      '過去問道場 科目B演習',
-    ]},
-  ];
-
   let state = {
     examDate: '',
     shifts: [],       // {date:'YYYY-MM-DD', start:'HH:MM', end:'HH:MM', place:''}
     sleepHours: 7,     // 1日あたりの睡眠時間(h)。週間可処分時間の計算から差し引く
     logs: [],         // {id, date, hours, topic}
-    checklist: {},     // topicKey: bool
     kakomonRecords: [], // {url,date,field,major,minor,correct,label} from 過去問道場CSV
     trendGranularity: 'field', // 'field' (分野名) or 'major' (大分類)
     analysisPeriod: { all: true, start: '', end: '' }, // 過去問道場CSV分析の対象期間
@@ -869,6 +818,74 @@
     'ストラテジ系': ['システム戦略','システム企画','経営戦略マネジメント','技術戦略マネジメント','ビジネスインダストリ','企業活動','法務'],
   };
 
+  // ---------- 学習進捗スコア(重みづけ) ----------
+  // 分野別の重みは、CBT科目A試験(60問)の公式内訳: テクノロジ系41問・マネジメント系7問・ストラテジ系12問。
+  // 中分類別の重みは公式には非公開のため、IPA公式シラバス(Ver.9.2)の目次における
+  // 各中分類の記載ページ数(=学習量の目安)を数え、分野の重みをページ数比で配分する。
+  const FIELD_QUESTION_COUNT = { 'テクノロジ系': 41, 'マネジメント系': 7, 'ストラテジ系': 12 }; // 60問中
+  const CATEGORY_PAGES = {
+    'テクノロジ系': { '基礎理論':5, 'アルゴリズムとプログラミング':4, 'コンピュータ構成要素':5, 'システム構成要素':2, 'ソフトウェア':5, 'ハードウェア':1, 'ユーザーインタフェース':2, '情報メディア':2, 'データベース':4, 'ネットワーク':6, 'セキュリティ':7, 'システム開発技術':13, 'ソフトウェア開発管理技術':5 },
+    'マネジメント系': { 'プロジェクトマネジメント':6, 'サービスマネジメント':7, 'システム監査':3 },
+    'ストラテジ系': { 'システム戦略':4, 'システム企画':3, '経営戦略マネジメント':4, '技術戦略マネジメント':1, 'ビジネスインダストリ':5, '企業活動':6, '法務':6 },
+  };
+
+  function getCategoryWeight(field, minor){
+    const pages = CATEGORY_PAGES[field];
+    if(!pages || !(minor in pages)) return 0;
+    const totalPages = Object.values(pages).reduce((a,b) => a+b, 0);
+    const fieldShare = (FIELD_QUESTION_COUNT[field] || 0) / 60;
+    const minorShare = pages[minor] / totalPages;
+    return fieldShare * minorShare; // 0〜1の範囲。全中分類の合計はおよそ1になる
+  }
+
+  // 現時点での習熟度(=100点相当の知識量に対する到達度)を算出する。
+  // 未経験の中分類は正答率0%として計算に含める。期間フィルタの影響は受けず、常に全期間の記録が対象。
+  function computeMastery(){
+    const records = state.kakomonRecords;
+    let overall = 0;
+    const fieldScores = {};
+    FIELD_ORDER.forEach(f => { fieldScores[f] = { weightSum: 0, scoreSum: 0 }; });
+    Object.keys(CATEGORY_PAGES).forEach(field => {
+      Object.keys(CATEGORY_PAGES[field]).forEach(minor => {
+        const w = getCategoryWeight(field, minor);
+        const recs = records.filter(r => r.field === field && (r.minor || r.major) === minor);
+        const correct = recs.filter(r => r.correct === true).length;
+        const incorrect = recs.filter(r => r.correct === false).length;
+        const answered = correct + incorrect;
+        const acc = answered > 0 ? correct / answered : 0;
+        overall += w * acc;
+        if(!fieldScores[field]) fieldScores[field] = { weightSum: 0, scoreSum: 0 };
+        fieldScores[field].weightSum += w;
+        fieldScores[field].scoreSum += w * acc;
+      });
+    });
+    const byField = FIELD_ORDER.map(f => ({
+      field: f,
+      pct: fieldScores[f] && fieldScores[f].weightSum > 0 ? (fieldScores[f].scoreSum / fieldScores[f].weightSum * 100) : 0
+    }));
+    return { overallPct: overall * 100, byField };
+  }
+
+  function renderMastery(){
+    const box = document.getElementById('masteryBox');
+    if(!box) return;
+    if(state.kakomonRecords.length === 0){ box.innerHTML = ''; return; }
+    const { overallPct, byField } = computeMastery();
+    const fieldsHtml = byField.map(f => `
+      <div class="mastery-field">
+        <div class="mastery-field-name">${escapeHtml(f.field)}</div>
+        <div class="mastery-field-bar"><div class="mastery-field-bar-inner" style="width:${f.pct.toFixed(1)}%"></div></div>
+        <div class="mastery-field-pct">${f.pct.toFixed(1)}%</div>
+      </div>
+    `).join('');
+    box.innerHTML = `
+      <div class="mastery-title">推定学習進捗(100点を取れる知識量を100%とした場合)</div>
+      <div class="mastery-pct">${overallPct.toFixed(1)}<span>%</span></div>
+      <p class="mastery-note">IPA公式シラバスの中分類ごとの分量(ページ数)と、科目Aの分野別出題数(テクノロジ系41問・マネジメント系7問・ストラテジ系12問)を重みとし、あなたの中分類ごとの正答率(未経験の中分類は0%)を掛け合わせて算出しています。全期間の記録が対象です。</p>
+      <div class="mastery-fields">${fieldsHtml}</div>
+    `;
+  }
+
   function buildFieldGroups(records){
     const byField = {};
     records.forEach(r => {
@@ -1095,6 +1112,7 @@
           if(rate < 0.6) tag = '<span class="tag weak">苦手</span>';
           else if(rate >= 0.8) tag = '<span class="tag strong">得意</span>';
         }
+        const rateLabel = rate !== null ? `正答率${Math.round(rate*100)}% ・ ` : '';
         const rowTotal = r.correct + r.incorrect + r.unanswered;
         const pct = n => rowTotal > 0 ? (n / rowTotal * 100) : 0;
         // 件数が少なく%が小さすぎると視認できなくなるため、1件以上あれば最低幅を確保する
@@ -1107,7 +1125,7 @@
               <div class="bd-bar-incorrect" style="${segStyle(r.incorrect)}"></div>
               <div class="bd-bar-unanswered" style="${segStyle(r.unanswered)}"></div>
             </div>
-            <span class="bd-num">正${r.correct}/誤${r.incorrect}/未${r.unanswered}</span>
+            <span class="bd-num">${rateLabel}正${r.correct}/誤${r.incorrect}/未${r.unanswered}</span>
             ${tag}
           </div>
         `;
@@ -1225,64 +1243,11 @@
 
   function renderKakomon(){
     syncPeriodControls();
+    renderMastery();
     renderBreakdown();
     renderOverallTrend();
     renderCategoryTrend();
     updateToggleActive();
-  }
-
-  // ---------- Checklist ----------
-  function topicKey(groupId, idx){ return `${groupId}_${idx}`; }
-
-  function renderChecklist(){
-    const wrap = document.getElementById('groupsWrap');
-    wrap.innerHTML = '';
-    let doneTotal = 0, allTotal = 0;
-
-    SYLLABUS.forEach(group => {
-      const groupDiv = document.createElement('div');
-      groupDiv.className = 'group';
-
-      let groupDone = 0;
-      const topicsHtml = group.topics.map((t, idx) => {
-        const key = topicKey(group.id, idx);
-        const checked = !!state.checklist[key];
-        if(checked) groupDone++;
-        allTotal++;
-        if(checked) doneTotal++;
-        return `
-          <div class="topic ${checked ? 'done' : ''}">
-            <input type="checkbox" id="chk_${key}" ${checked ? 'checked' : ''} data-key="${key}">
-            <label for="chk_${key}">${t}</label>
-          </div>
-        `;
-      }).join('');
-
-      const groupPct = Math.round((groupDone / group.topics.length) * 100);
-
-      groupDiv.innerHTML = `
-        <div class="group-head">
-          <h3>${group.name}</h3>
-          <span class="g-pct">${groupDone}/${group.topics.length}</span>
-        </div>
-        <div class="group-bar"><div class="group-bar-inner" style="width:${groupPct}%"></div></div>
-        <div class="topics">${topicsHtml}</div>
-      `;
-      wrap.appendChild(groupDiv);
-    });
-
-    wrap.querySelectorAll('input[type=checkbox]').forEach(cb => {
-      cb.addEventListener('change', (e) => {
-        const key = e.target.dataset.key;
-        state.checklist[key] = e.target.checked;
-        saveState();
-        renderChecklist();
-      });
-    });
-
-    const overallPct = allTotal ? Math.round((doneTotal / allTotal) * 100) : 0;
-    document.getElementById('overallBar').style.width = overallPct + '%';
-    document.getElementById('overallPct').textContent = `全体 ${overallPct}% 完了 (${doneTotal}/${allTotal})`;
   }
 
   function render(){
@@ -1291,7 +1256,6 @@
     renderTimeline();
     renderLogs();
     renderKakomon();
-    renderChecklist();
   }
 
   // ---------- Google Drive sync ----------
