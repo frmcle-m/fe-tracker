@@ -594,7 +594,7 @@
       <span><span class="swatch" style="border-color:var(--busy)"></span>実績(未定着問題数)</span>
       <span><span class="swatch dashed" style="border-color:var(--ideal)"></span>理想線</span>
     </div>
-    <p class="assumption">※ 同じ問題を同じ日に複数回解いた記録がある場合、CSV内の並び順を古い→新しいとみなして最後の結果を最新とみなしています。出典URLが記録されていない設問は分野・分類・設問名から仮のIDを作るため、正しく追跡できない場合があります。</p>
+    <p class="assumption">※ 理想線は、週間可処分時間の各日に設定した「学習計画時間」の配分に応じて減少します(未設定の日は1日30分として計算)。計画時間を設定していない場合は、これまで通り学習開始日から試験日までの等ペースの直線になります。<br>※ 同じ問題を同じ日に複数回解いた記録がある場合、CSV内の並び順を古い→新しいとみなして最後の結果を最新とみなしています。出典URLが記録されていない設問は分野・分類・設問名から仮のIDを作るため、正しく追跡できない場合があります。</p>
   </section>
 
   <section>
@@ -1427,6 +1427,11 @@
     return `${y}-${m}-${da}`;
   }
 
+  // 指定日の学習計画時間(分)。未入力の日は1日30分として扱う。
+  function plannedMinutesFor(dateStr){
+    return (state.dailyStudyPlan && state.dailyStudyPlan[dateStr] != null) ? state.dailyStudyPlan[dateStr] : 30;
+  }
+
   // 今日(開いた日)から試験日までの学習計画時間の合計。未入力の日は1日30分として扱う。
   function renderStudyPlanTotal(){
     const el = document.getElementById('planTotal');
@@ -1443,9 +1448,7 @@
     let totalMinutes = 0;
     const d = new Date(today);
     while(d <= exam){
-      const dateStr = fmtDate(d);
-      const planned = (state.dailyStudyPlan && state.dailyStudyPlan[dateStr] != null) ? state.dailyStudyPlan[dateStr] : 30;
-      totalMinutes += planned;
+      totalMinutes += plannedMinutesFor(fmtDate(d));
       d.setDate(d.getDate() + 1);
     }
     const hours = (totalMinutes / 60).toFixed(1);
@@ -2032,6 +2035,28 @@
     return new Date().toISOString().slice(0,10);
   }
 
+  // 学習開始日〜試験日の理想線を、週間可処分時間で設定した「学習計画時間」の配分に応じて算出する。
+  // 学習計画時間を入力していない日は1日30分として扱うため、何も設定していない場合は単純な直線(等ペース)と一致する。
+  function buildIdealSeries(start, exam, idealStartVal){
+    const studyDates = eachDate(start, exam).slice(0, -1); // 学習に使える日は開始日〜試験前日
+    const points = [{ date: start, value: idealStartVal }];
+    if(studyDates.length === 0 || idealStartVal <= 0){
+      points.push({ date: exam, value: 0 });
+      return points;
+    }
+    const rawTotal = studyDates.reduce((sum,d) => sum + plannedMinutesFor(d), 0);
+    const useFallback = rawTotal <= 0;
+    const totalPlanned = useFallback ? studyDates.length : rawTotal;
+    let cum = 0;
+    studyDates.forEach(d => {
+      cum += useFallback ? 1 : plannedMinutesFor(d);
+      const remaining = Math.max(0, totalPlanned - cum);
+      points.push({ date: d, value: idealStartVal * remaining / totalPlanned });
+    });
+    points.push({ date: exam, value: 0 }); // 試験日は必ず0に固定
+    return points;
+  }
+
   function renderBurndownChart(series){
     const svg = document.getElementById('burndownSvg');
     const start = state.startDate;
@@ -2070,7 +2095,8 @@
     const labelDates = [...new Set([domainStart, start, exam, today, domainEnd])].filter(d => d >= domainStart && d <= domainEnd).sort();
     const labels = labelDates.map(d => `<text x="${x(d).toFixed(1)}" y="${H-8}" font-size="9.5" text-anchor="middle" fill="#8b96a1">${d.slice(5)}</text>`).join('');
 
-    const idealPath = `M ${x(start).toFixed(1)} ${y(idealStartVal).toFixed(1)} L ${x(exam).toFixed(1)} ${y(0).toFixed(1)}`;
+    const idealSeries = buildIdealSeries(start, exam, idealStartVal);
+    const idealPath = idealSeries.map((p,i) => `${i===0?'M':'L'} ${x(p.date).toFixed(1)} ${y(p.value).toFixed(1)}`).join(' ');
 
     let actualPath = '';
     let dots = '';
@@ -2114,7 +2140,7 @@
       { lbl:'現在の未定着問題数', val: current.backlog, unit:'問' },
       { lbl:'取込み済み問題数(累計)', val: current.tracked, unit:'問' },
       { lbl:'試験日までの残り', val: remainingDays !== null ? remainingDays : '—', unit:'日' },
-      { lbl:'理想ペース(1日あたり)', val: paceHtml, unit:'問/日' },
+      { lbl:'理想ペース(平均/日)', val: paceHtml, unit:'問/日' },
     ];
     grid.innerHTML = cards.map(c => `
       <div class="stat-card">
