@@ -388,6 +388,15 @@
   .weak-row{display:flex;justify-content:space-between;align-items:center;background:var(--bg);border-radius:8px;padding:8px 14px;font-size:13px;gap:12px;flex-wrap:wrap;}
   .weak-row .meta{color:var(--ink-soft);font-size:12px;}
 
+  /* field burndown */
+  .field-bd-block{margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--surface-alt);}
+  .field-bd-block:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none;}
+  .field-bd-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:6px;}
+  .field-bd-title{font-size:14px;font-weight:700;color:var(--primary-deep);margin:0;}
+  .field-bd-stats{font-size:12px;color:var(--ink-soft);display:flex;gap:14px;flex-wrap:wrap;}
+  .field-bd-stats b{color:var(--primary-deep);}
+  .field-bd-stats .acc-src{font-size:10.5px;opacity:0.8;}
+
   .footer-note{
     text-align:center;font-size:11.5px;color:var(--ink-soft);margin-top:8px;
   }
@@ -595,6 +604,12 @@
       <span><span class="swatch dashed" style="border-color:var(--ideal)"></span>理想線</span>
     </div>
     <p class="assumption">※ 理想線は、週間可処分時間の各日に設定した「学習計画時間」の配分に応じて減少します(未設定の日は1日30分として計算)。計画時間を設定していない場合は、これまで通り学習開始日から試験日までの等ペースの直線になります。<br>※ 同じ問題を同じ日に複数回解いた記録がある場合、CSV内の並び順を古い→新しいとみなして最後の結果を最新とみなしています。出典URLが記録されていない設問は分野・分類・設問名から仮のIDを作るため、正しく追跡できない場合があります。</p>
+  </section>
+
+  <section>
+    <h2>分野別バーンダウン</h2>
+    <p class="section-desc">分野(3系統)ごとの未定着問題の推移と理想線です。「必要演習量」は、その分野の正答率(直近14日、データ不足時は全期間)から「1問の定着に平均 1÷正答率 回の演習が必要」とみなして算出した、試験日までに1日あたり必要な演習回数の目安です。正答率が低い分野ほど、同じ未定着数でも多くの演習が必要になります。</p>
+    <div id="fieldBurndownWrap"></div>
   </section>
 
   <section>
@@ -2002,8 +2017,9 @@
     return 'x:' + r.field + '_' + r.major + '_' + r.minor;
   }
 
-  function buildBacklogSeries(){
-    const withIndex = state.kakomonRecords.map((r,i) => ({ ...r, _i:i, key: recordKey(r) }));
+  function buildBacklogSeries(records){
+    const src = records || state.kakomonRecords;
+    const withIndex = src.map((r,i) => ({ ...r, _i:i, key: recordKey(r) }));
     withIndex.sort((a,b) => a.date.localeCompare(b.date) || a._i - b._i);
     const dates = [...new Set(withIndex.map(r => r.date))];
     const status = new Map(); // key -> latest correct
@@ -2175,11 +2191,144 @@
     `).join('');
   }
 
+  // 分野の正答率。直近14日の解答が10問以上あればそれを使い、足りなければ全期間で計算する。
+  // 「1問の定着に必要な平均演習回数 = 1/正答率」の見積もりに使うため、0.2〜0.95に制限する。
+  const ACCURACY_WINDOW_DAYS = 14;
+  const ACCURACY_MIN_SAMPLES = 10;
+  function fieldAccuracy(fieldRecords){
+    const answered = fieldRecords.filter(r => r.correct !== null);
+    if(answered.length === 0) return null;
+    const cutoff = (() => {
+      const d = new Date(); d.setDate(d.getDate() - ACCURACY_WINDOW_DAYS);
+      return fmtDate(d);
+    })();
+    const recent = answered.filter(r => r.date >= cutoff);
+    const useRecent = recent.length >= ACCURACY_MIN_SAMPLES;
+    const target = useRecent ? recent : answered;
+    const rawRate = target.filter(r => r.correct === true).length / target.length;
+    const clamped = Math.min(0.95, Math.max(0.2, rawRate));
+    return { rate: rawRate, clamped, n: target.length, isRecent: useRecent };
+  }
+
+  function renderFieldBurndowns(){
+    const wrap = document.getElementById('fieldBurndownWrap');
+    if(state.kakomonRecords.length === 0){
+      wrap.innerHTML = '<p class="empty-note">まだCSVが取り込まれていません。</p>';
+      return;
+    }
+    const fields = [...new Set(state.kakomonRecords.map(r => r.field).filter(Boolean))];
+    if(fields.length === 0){
+      wrap.innerHTML = '<p class="empty-note">分野名が記録されていないため、分野別の表示ができません。</p>';
+      return;
+    }
+    const start = state.startDate, exam = state.examDate;
+    const today = todayStr();
+    const remainingDays = exam ? Math.max(0, daysBetween(today, exam)) : null;
+
+    wrap.innerHTML = fields.map(field => {
+      const fieldRecords = state.kakomonRecords.filter(r => r.field === field);
+      const series = buildBacklogSeries(fieldRecords);
+      const current = series.length ? series[series.length-1] : { backlog:0, tracked:0 };
+      const acc = fieldAccuracy(fieldRecords);
+
+      let accHtml = '正答率 <b>—</b>';
+      let paceHtml = '必要演習量 <b>—</b>';
+      if(acc){
+        accHtml = `正答率 <b>${Math.round(acc.rate*100)}%</b> <span class="acc-src">(${acc.isRecent ? '直近14日' : '全期間'}・n=${acc.n})</span>`;
+        if(remainingDays !== null && remainingDays > 0 && current.backlog > 0){
+          const pace = (current.backlog / acc.clamped) / remainingDays;
+          paceHtml = `必要演習量 <b>${pace.toFixed(1)}回/日</b>`;
+        } else if(current.backlog === 0){
+          paceHtml = '必要演習量 <b>0回/日</b>';
+        }
+      }
+
+      const svgId = 'fieldBdSvg_' + fields.indexOf(field);
+      return `
+        <div class="field-bd-block">
+          <div class="field-bd-head">
+            <h3 class="field-bd-title">${escapeHtml(field)}</h3>
+            <div class="field-bd-stats">
+              <span>未定着 <b>${current.backlog}問</b> / 累計 ${current.tracked}問</span>
+              <span>${accHtml}</span>
+              <span>${paceHtml}</span>
+            </div>
+          </div>
+          <div class="chart-box"><svg id="${svgId}"></svg></div>
+        </div>
+      `;
+    }).join('');
+
+    // チャート描画(innerHTML挿入後にSVGを埋める)
+    fields.forEach((field, fi) => {
+      const svg = document.getElementById('fieldBdSvg_' + fi);
+      if(!svg) return;
+      const fieldRecords = state.kakomonRecords.filter(r => r.field === field);
+      const series = buildBacklogSeries(fieldRecords);
+      drawFieldBurndownSvg(svg, series);
+    });
+  }
+
+  // 分野別のコンパクトなバーンダウンチャート(実績+理想線)
+  function drawFieldBurndownSvg(svg, series){
+    const start = state.startDate, exam = state.examDate;
+    if(series.length === 0){ svg.innerHTML = ''; svg.removeAttribute('viewBox'); return; }
+
+    const firstDataDate = series[0].date;
+    const lastDataDate = series[series.length-1].date;
+    const today = todayStr();
+    const domainStart = [start, firstDataDate].filter(Boolean).sort()[0];
+    const domainEnd = [exam, lastDataDate, today].filter(Boolean).sort().slice(-1)[0];
+    const totalDays = Math.max(1, daysBetween(domainStart, domainEnd));
+
+    const W = 640, H = 130, padL = 32, padR = 14, padT = 10, padB = 22;
+    const innerW = W - padL - padR, innerH = H - padT - padB;
+    const x = dateStr => padL + (daysBetween(domainStart, dateStr) / totalDays) * innerW;
+
+    const maxBacklogRaw = Math.max(...series.map(s => s.backlog));
+    const idealStartVal = (start && backlogAsOf(series, start) !== null) ? backlogAsOf(series, start) : backlogAsOf(series, firstDataDate);
+    const yMax = Math.max(maxBacklogRaw, idealStartVal || 0, 1);
+    const y = v => padT + innerH - (v / yMax * innerH);
+
+    let grid = '';
+    [0, Math.round(yMax/2), yMax].forEach(v => {
+      const yy = y(v);
+      grid += `<line x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}" stroke="#E9EEF2" stroke-width="1"/>`;
+      grid += `<text x="${padL-6}" y="${yy+3.5}" font-size="9" text-anchor="end" fill="#8b96a1">${v}</text>`;
+    });
+    const labelDates = [...new Set([domainStart, today, domainEnd])].filter(d => d >= domainStart && d <= domainEnd).sort();
+    const labels = labelDates.map(d => `<text x="${x(d).toFixed(1)}" y="${H-6}" font-size="8.5" text-anchor="middle" fill="#8b96a1">${d.slice(5)}</text>`).join('');
+
+    let idealPath = '';
+    if(start && exam && idealStartVal !== null){
+      const idealSeries = buildIdealSeries(start, exam, idealStartVal);
+      idealPath = `<path d="${idealSeries.map((p,i) => `${i===0?'M':'L'} ${x(p.date).toFixed(1)} ${y(p.value).toFixed(1)}`).join(' ')}" fill="none" stroke="#B7A0C4" stroke-width="1.5" stroke-dasharray="5,3"/>`;
+    }
+
+    let actualPath = '';
+    let dots = '';
+    series.forEach((s,i) => {
+      const px = x(s.date).toFixed(1), py = y(s.backlog).toFixed(1);
+      actualPath += (i===0 ? 'M' : 'L') + ` ${px} ${py} `;
+      dots += `<circle cx="${px}" cy="${py}" r="2.8" fill="#D8A48F"><title>${s.date} 未定着${s.backlog}問</title></circle>`;
+    });
+    let todayLine = '';
+    if(today >= domainStart && today <= domainEnd){
+      todayLine = `<line x1="${x(today).toFixed(1)}" y1="${padT}" x2="${x(today).toFixed(1)}" y2="${padT+innerH}" stroke="#33506A" stroke-width="1" stroke-dasharray="2,2" opacity="0.5"/>`;
+    }
+
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.innerHTML = grid + todayLine + idealPath
+      + `<path d="${actualPath.trim()}" fill="none" stroke="#D8A48F" stroke-width="1.8"/>`
+      + dots + labels;
+  }
+
   function renderBurndownAll(){
     burndownStartInput.value = state.startDate || '';
     const series = buildBacklogSeries();
     renderBurndownChart(series);
     renderBurndownStats(series);
+    renderFieldBurndowns();
     renderBurndownWeakList();
   }
 
